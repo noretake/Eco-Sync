@@ -15,6 +15,15 @@ type Reply = {
   sources: Source[];
 };
 
+type WhatsAppStatus = {
+  state: "disabled" | "starting" | "qr" | "authenticated" | "ready" | "disconnected";
+  qr?: string;
+  me?: string;
+  groups?: Array<{ id: string; name: string }>;
+  targetGroup?: string;
+  error?: string;
+};
+
 const Logo = () => (
   <svg viewBox="0 0 40 40" className="logo">
     <path
@@ -33,11 +42,26 @@ function App() {
   const [messages, setMessages] = useState<Reply[]>([]);
   const [busy, setBusy] = useState(false);
   const [range, setRange] = useState("24");
+  const [whatsapp, setWhatsapp] = useState<WhatsAppStatus>();
 
   useEffect(() => {
     fetch("/api/stats")
       .then((response) => response.json())
       .then(setStats);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const load = () =>
+      fetch("/api/whatsapp/status")
+        .then((response) => response.json())
+        .then((value) => active && setWhatsapp(value));
+    load();
+    const timer = window.setInterval(load, 3000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, []);
 
   const ask = async (value = question) => {
@@ -108,6 +132,60 @@ function App() {
             <b>{stats.find((stat) => stat.channel === channel)?.count ?? 0}</b>
           </div>
         ))}
+        <section className="whatsapp-web">
+          <h3>WHATSAPP GROUP</h3>
+          {!whatsapp || whatsapp.state === "starting" ? (
+            <p className="whatsapp-muted">
+              <span className="spinner" /> Starting linked device…
+            </p>
+          ) : whatsapp.state === "disabled" ? (
+            <p className="whatsapp-muted">Set WHATSAPP_WEB_ENABLED=true to connect a group.</p>
+          ) : whatsapp.state === "qr" ? (
+            <>
+              {whatsapp.qr && (
+                <img className="whatsapp-qr" src={whatsapp.qr} alt="WhatsApp link QR code" />
+              )}
+              <p className="whatsapp-muted">Open WhatsApp → Linked devices → Link a device</p>
+            </>
+          ) : whatsapp.state === "ready" ? (
+            <>
+              <p className="whatsapp-ready">Linked as {whatsapp.me}</p>
+              <select
+                value={whatsapp.targetGroup ?? ""}
+                onChange={(event) =>
+                  fetch("/api/whatsapp/group", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ group: event.target.value }),
+                  })
+                    .then((response) => response.json())
+                    .then(setWhatsapp)
+                }
+              >
+                <option value="" disabled>
+                  Choose a group
+                </option>
+                {whatsapp.groups?.map((group) => (
+                  <option value={group.name} key={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="unlink"
+                onClick={() =>
+                  fetch("/api/whatsapp/logout", { method: "POST" })
+                    .then((response) => response.json())
+                    .then(setWhatsapp)
+                }
+              >
+                Unlink
+              </button>
+            </>
+          ) : (
+            <p className="whatsapp-error">{whatsapp.error ?? "WhatsApp device disconnected."}</p>
+          )}
+        </section>
         <label className="upload">
           ＋ Upload data
           <input

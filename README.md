@@ -38,6 +38,17 @@ Open http://localhost:5173. No API key is required: lexical mode uses FTS5 and r
 
 For WhatsApp Cloud API, create a Meta app, set `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_TOKEN`, and `WHATSAPP_PHONE_NUMBER_ID`, expose port 8787 with `ngrok http 8787`, and configure the callback as `/webhooks/whatsapp` with `messages` subscribed. `@eco` and `/ask` messages receive replies; `WHATSAPP_REPLY_ALL=true` replies to every inbound text.
 
+### Connect a live WhatsApp group (linked device)
+
+WhatsApp Cloud API cannot read group chats. Eco Sync can instead connect one group through a linked WhatsApp Web device:
+
+1. Set `WHATSAPP_WEB_ENABLED=true` and optionally `WHATSAPP_GROUP_NAME` in `.env`.
+2. Start Eco Sync with `npm run dev`; the dashboard sidebar shows the WhatsApp group connection.
+3. Scan the QR code with **WhatsApp → Linked devices → Link a device**.
+4. Pick the group in the dashboard. New group messages are ingested, and anyone can type `@eco <question>` to receive an answer.
+
+This uses unofficial WhatsApp Web automation. Prefer a spare WhatsApp number and expect WhatsApp policy or compatibility changes. The host needs Chrome; set `PUPPETEER_EXECUTABLE_PATH` when Chrome is not at `/usr/bin/google-chrome`. The Docker image installs Chromium and sets `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`. Set `WHATSAPP_BACKFILL_LIMIT` to control the initial message import.
+
 For email, provide IMAP and SMTP host/user/password settings plus `EMAIL_BOT_ADDRESS`. The poller ingests unread mail; subjects beginning `Eco Sync:` or mail to the bot receive a response.
 
 Teams requires an Azure app registration with client credentials, Graph `ChannelMessage.Read.All` and online meeting transcript permissions, and the IDs in `.env`. The included client polls a channel and exposes `/webhooks/teams` for Bot Framework-style activities. Azure approval and tenant configuration are required.

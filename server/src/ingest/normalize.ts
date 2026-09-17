@@ -5,6 +5,7 @@ export type NormalizedMessage = {
   text: string;
   threadId?: string;
   attachments?: string[];
+  externalId?: string;
 };
 const noise = [
   /^<Media omitted>$/i,

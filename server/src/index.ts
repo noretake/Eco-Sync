@@ -8,12 +8,15 @@ import ingestRouter from "./routes/ingest.js";
 import { startWhatsApp } from "./connectors/whatsapp.js";
 import { startEmail } from "./connectors/email.js";
 import { startTeams } from "./connectors/teams.js";
+import { startWhatsAppWeb } from "./connectors/whatsappWeb.js";
+import whatsappRouter from "./routes/whatsapp.js";
 
 export const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use("/api", chatRouter);
 app.use("/api/ingest", ingestRouter);
+app.use("/api", whatsappRouter);
 app.get("/health", (_req, res) => res.json({ ok: true }));
 const webDist = path.resolve(process.cwd(), "web/dist");
 app.use(express.static(webDist));
@@ -24,6 +27,7 @@ app.get("*", (_req, res, next) => {
 startWhatsApp(app);
 startEmail();
 startTeams(app);
+if (config.WHATSAPP_WEB_ENABLED) startWhatsAppWeb();
 if (process.env.NODE_ENV !== "test")
   app.listen(config.PORT, () => console.log(`Eco Sync listening on ${config.PORT}`));
 export { db };

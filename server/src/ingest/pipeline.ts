@@ -5,31 +5,50 @@ import { normalize, type NormalizedMessage } from "./normalize.js";
 
 export async function ingestMessages(messages: NormalizedMessage[], name = "API") {
   if (!messages.length) return 0;
-  const normalized = messages.map(normalize);
+  const normalized = messages.map(normalize).filter((message) => {
+    if (!message.externalId) return true;
+    const row = db.prepare("SELECT 1 FROM messages WHERE external_id=?").get(message.externalId);
+    return !row;
+  });
+  if (!normalized.length) return 0;
   const sid = source(normalized[0].channel, name);
   const insertMessage = db.prepare(
-    "INSERT INTO messages(source_id,channel,sender,sent_at,text,thread_id,raw_json) VALUES(?,?,?,?,?,?,?)",
+    "INSERT OR IGNORE INTO messages(source_id,channel,sender,sent_at,text,thread_id,raw_json,external_id) VALUES(?,?,?,?,?,?,?,?)",
   );
-  const chunks = chunkMessages(normalized, sid);
   const insertChunk = db.prepare(
     "INSERT INTO chunks(message_id,source_id,channel,sender,sent_at,content,embedding) VALUES(?,?,?,?,?,?,?)",
   );
 
+  const inserted: Array<{ message: NormalizedMessage; id: number }> = [];
   for (const message of normalized) {
-    const id = Number(
-      insertMessage.run(
-        sid,
-        message.channel,
-        message.sender,
-        new Date(message.sentAt).toISOString(),
-        message.text,
-        message.threadId,
-        JSON.stringify(message),
-      ).lastInsertRowid,
+    const result = insertMessage.run(
+      sid,
+      message.channel,
+      message.sender,
+      new Date(message.sentAt).toISOString(),
+      message.text,
+      message.threadId,
+      JSON.stringify(message),
+      message.externalId ?? null,
     );
-    const chunk = chunks.find((candidate) => candidate.content.includes(message.text));
-    if (chunk) chunk.messageId = id;
+    if (result.changes) {
+      inserted.push({ message, id: Number(result.lastInsertRowid) });
+    }
   }
+
+  const chunks = inserted.some(({ message }) => message.externalId)
+    ? inserted.flatMap(({ message, id }) => {
+        const chunk = chunkMessages([message], sid)[0];
+        if (chunk) chunk.messageId = id;
+        return chunk ? [chunk] : [];
+      })
+    : chunkMessages(
+        inserted.map(({ message }) => message),
+        sid,
+      ).map((chunk) => {
+        const matching = inserted.find(({ message }) => chunk.content.includes(message.text));
+        return { ...chunk, messageId: matching?.id };
+      });
 
   for (const chunk of chunks) {
     const embedding = await embed(chunk.content);

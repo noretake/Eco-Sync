@@ -64,6 +64,56 @@ h3 {
 .stat b {
   color: #65e7ae;
 }
+.whatsapp-web {
+  border-top: 1px solid #21483a;
+  margin-top: 12px;
+  padding-top: 4px;
+}
+.whatsapp-web select,
+.unlink {
+  width: 100%;
+  margin-top: 9px;
+  padding: 8px;
+  border-radius: 7px;
+  background: #17382d;
+  border: 1px solid #376653;
+  color: #cae7dc;
+  font-size: 12px;
+}
+.whatsapp-qr {
+  display: block;
+  width: 200px;
+  height: 200px;
+  margin: 12px auto 8px;
+  background: white;
+  border-radius: 5px;
+}
+.whatsapp-muted,
+.whatsapp-ready,
+.whatsapp-error {
+  color: #86a69a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.whatsapp-ready {
+  color: #65e7ae;
+}
+.whatsapp-error {
+  color: #f28b8b;
+}
+.unlink {
+  cursor: pointer;
+}
+.spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  border: 1px solid #65e7ae;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
 .upload,
 button {
   cursor: pointer;
@@ -268,5 +318,10 @@ form button {
   }
   100% {
     width: 18px;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }

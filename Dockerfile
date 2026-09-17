@@ -8,6 +8,7 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=build /app /app
-RUN mkdir -p data
+RUN apk add --no-cache chromium && mkdir -p data
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 EXPOSE 8787
 CMD ["npm","run","dev","--workspace","server"]

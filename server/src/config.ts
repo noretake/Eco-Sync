@@ -1,5 +1,9 @@
-import "dotenv/config";
+import path from "node:path";
+import dotenv from "dotenv";
 import { z } from "zod";
+
+dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const schema = z.object({
   PORT: z.coerce.number().default(8787),
@@ -15,6 +19,13 @@ const schema = z.object({
     .string()
     .transform((v) => v === "true")
     .default("false"),
+  WHATSAPP_WEB_ENABLED: z
+    .string()
+    .transform((v) => v === "true")
+    .default("false"),
+  WHATSAPP_GROUP_NAME: z.string().optional(),
+  WHATSAPP_BACKFILL_LIMIT: z.coerce.number().default(300),
+  PUPPETEER_EXECUTABLE_PATH: z.string().optional(),
   EMAIL_IMAP_HOST: z.string().optional(),
   EMAIL_IMAP_PORT: z.coerce.number().default(993),
   EMAIL_IMAP_USER: z.string().optional(),

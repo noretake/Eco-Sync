@@ -5,6 +5,9 @@ import { chunkMessages } from "./ingest/chunk.js";
 import { parseTranscript } from "./ingest/parsers/vtt.js";
 import { parseWhatsApp } from "./ingest/parsers/whatsappExport.js";
 import { answer } from "./rag/answer.js";
+import { db } from "./db/index.js";
+import { ingestMessages } from "./ingest/pipeline.js";
+import { extractQuestion } from "./connectors/whatsappWeb.js";
 
 describe("parsers and chunker", () => {
   it("parses WhatsApp formats and strips system lines", () => {
@@ -48,5 +51,45 @@ describe("parsers and chunker", () => {
       .send({ question: "When is the next meeting?" });
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("answer");
+  });
+
+  it("deduplicates messages by external id", async () => {
+    const externalId = `test-${Date.now()}`;
+    await ingestMessages(
+      [
+        {
+          channel: "whatsapp",
+          sender: "Test",
+          sentAt: new Date("2024-03-20T12:00:00Z"),
+          text: "Deduplication test",
+          externalId,
+        },
+      ],
+      "WhatsApp Web Test",
+    );
+    await ingestMessages(
+      [
+        {
+          channel: "whatsapp",
+          sender: "Test",
+          sentAt: new Date("2024-03-20T12:00:00Z"),
+          text: "Deduplication test",
+          externalId,
+        },
+      ],
+      "WhatsApp Web Test",
+    );
+    const rows = db
+      .prepare("SELECT id FROM messages WHERE external_id=?")
+      .all(externalId) as Array<{ id: number }>;
+    expect(rows).toHaveLength(1);
+    db.prepare("DELETE FROM chunks WHERE message_id=?").run(rows[0].id);
+    db.prepare("DELETE FROM messages WHERE id=?").run(rows[0].id);
+  });
+
+  it("extracts @eco and /ask questions", () => {
+    expect(extractQuestion("@eco When is the meeting?")).toBe("When is the meeting?");
+    expect(extractQuestion("/ask  where is the venue?")).toBe("where is the venue?");
+    expect(extractQuestion("hello group")).toBeNull();
   });
 });
