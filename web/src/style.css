@@ -358,6 +358,22 @@ button {
   display: block;
   margin-top: 28px;
 }
+.upload-hint,
+.upload-status,
+.upload-success {
+  color: #86a69a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.upload-hint {
+  margin: 8px 0 0;
+}
+.upload-status {
+  color: #b8d7cb;
+}
+.upload-success {
+  color: #65e7ae;
+}
 .back-link {
   display: inline-block;
   margin-top: 22px;

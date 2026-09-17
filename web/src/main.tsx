@@ -42,6 +42,11 @@ type Health = {
   llm: "ok" | string;
 };
 
+type UploadState = {
+  status: "idle" | "uploading" | "done" | "error";
+  message: string;
+};
+
 const isAdminPage = window.location.pathname === "/admin";
 
 function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
@@ -246,6 +251,7 @@ function App() {
   const [authLoading, setAuthLoading] = useState(!isAdminPage);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [conversationId, setConversationId] = useState<number>();
+  const [uploadState, setUploadState] = useState<UploadState>({ status: "idle", message: "" });
 
   const loadStats = () =>
     apiFetch("/api/stats")
@@ -410,14 +416,47 @@ function App() {
     await loadConversations();
   };
 
-  const upload = (file: File) => {
+  const upload = async (file: File, input: HTMLInputElement) => {
     const data = new FormData();
     data.append("file", file);
-    void apiFetch("/api/ingest/upload", {
-      method: "POST",
-      headers: adminHeaders(),
-      body: data,
-    }).then(loadStats);
+    setUploadState({ status: "uploading", message: `Uploading ${file.name}…` });
+    try {
+      const response = await apiFetch("/api/ingest/upload", {
+        method: "POST",
+        headers: adminHeaders(),
+        body: data,
+      });
+      const result = await response.json();
+      if (response.status === 401) {
+        window.localStorage.removeItem("ecoAdminToken");
+        setAdminAuthorized(false);
+        setUploadState({
+          status: "error",
+          message: "Admin session expired — log in again",
+        });
+      } else if (!response.ok) {
+        setUploadState({
+          status: "error",
+          message: result.error ?? "Upload failed",
+        });
+      } else if (result.count === 0 && result.duplicate) {
+        setUploadState({ status: "done", message: "Already imported — nothing new" });
+        await loadStats();
+      } else {
+        setUploadState({
+          status: "done",
+          message: `Imported ${result.count} messages from ${file.name}`,
+        });
+        await loadStats();
+      }
+    } catch (error) {
+      setUploadState({
+        status: "error",
+        message: error instanceof Error ? error.message : "Upload failed",
+      });
+    } finally {
+      input.value = "";
+    }
   };
 
   const submitAdminPassword = async (event: FormEvent) => {
@@ -573,10 +612,28 @@ function App() {
                   ＋ Upload data
                   <input
                     type="file"
-                    accept=".txt,.vtt,.eml,.mp3,.wav"
-                    onChange={(event) => event.target.files && upload(event.target.files[0])}
+                    accept=".txt,.vtt,.eml,.zip,.mp3,.m4a,.wav,.mp4,.webm"
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0];
+                      if (file) void upload(file, event.currentTarget);
+                    }}
                   />
                 </label>
+                <p className="upload-hint">
+                  WhatsApp export (.txt/.zip), meeting transcript (.vtt/.txt), email (.eml), or a
+                  recording
+                </p>
+                {uploadState.status === "uploading" && (
+                  <p className="upload-status">
+                    <span className="spinner" /> {uploadState.message}
+                  </p>
+                )}
+                {uploadState.status === "done" && (
+                  <p className="upload-success">{uploadState.message}</p>
+                )}
+                {uploadState.status === "error" && (
+                  <p className="whatsapp-error">{uploadState.message}</p>
+                )}
                 <a className="back-link" href="/">
                   ← Back to search
                 </a>

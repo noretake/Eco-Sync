@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { db, source } from "../db/index.js";
 import { embed } from "../llm/provider.js";
 import { noteLlmError } from "../llm/status.js";
@@ -15,11 +16,23 @@ async function safeEmbed(content: string) {
 
 export async function ingestMessages(messages: NormalizedMessage[], name = "API") {
   if (!messages.length) return 0;
-  const normalized = messages.map(normalize).filter((message) => {
-    if (!message.externalId) return true;
-    const row = db.prepare("SELECT 1 FROM messages WHERE external_id=?").get(message.externalId);
-    return !row;
-  });
+  const normalized = messages
+    .map(normalize)
+    .map((message) => {
+      if (message.externalId) return message;
+      const identity = [
+        message.channel,
+        message.sender,
+        new Date(message.sentAt).toISOString(),
+        message.text,
+      ].join("|");
+      return { ...message, externalId: `h:${createHash("sha1").update(identity).digest("hex")}` };
+    })
+    .filter((message) => {
+      if (!message.externalId) return true;
+      const row = db.prepare("SELECT 1 FROM messages WHERE external_id=?").get(message.externalId);
+      return !row;
+    });
   if (!normalized.length) return 0;
   const sid = source(normalized[0].channel, name);
   const insertMessage = db.prepare(
@@ -72,7 +85,7 @@ export async function ingestMessages(messages: NormalizedMessage[], name = "API"
       embedding ? Buffer.from(new Float32Array(embedding).buffer) : null,
     );
   }
-  return normalized.length;
+  return inserted.length;
 }
 
 export async function ingestTranscript(
@@ -80,7 +93,16 @@ export async function ingestTranscript(
   name = "Transcript",
   sourceDate?: Date,
 ) {
-  if (!messages.length) return 0;
+  if (!messages.length) return { count: 0 };
+  const existing = db
+    .prepare(
+      `SELECT sources.id FROM sources
+       WHERE sources.kind=? AND sources.name=?
+       AND (EXISTS(SELECT 1 FROM messages WHERE messages.source_id=sources.id)
+         OR EXISTS(SELECT 1 FROM chunks WHERE chunks.source_id=sources.id))`,
+    )
+    .get(messages[0].channel, name);
+  if (existing) return { count: 0, duplicate: true };
   const sid = source(messages[0].channel, name);
   const normalized = messages.map(normalize);
   const insertMessage = db.prepare(
@@ -112,5 +134,5 @@ export async function ingestTranscript(
       embedding ? Buffer.from(new Float32Array(embedding).buffer) : null,
     );
   }
-  return normalized.length;
+  return { count: normalized.length };
 }

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import AdmZip from "adm-zip";
 import multer from "multer";
 import { ingestMessages, ingestTranscript } from "../ingest/pipeline.js";
 import { parseWhatsApp } from "../ingest/parsers/whatsappExport.js";
@@ -21,16 +22,23 @@ router.post("/messages", async (req, res) => {
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "file required" });
-    const name = req.file.originalname,
-      ext = name.toLowerCase().split(".").pop(),
-      text = req.file.buffer.toString();
+    const name = req.file.originalname;
+    let ext = name.toLowerCase().split(".").pop();
+    let text = req.file.buffer.toString();
+    if (ext === "zip") {
+      const zip = new AdmZip(req.file.buffer);
+      const entry = zip
+        .getEntries()
+        .find((candidate) => !candidate.isDirectory && /\.txt$/i.test(candidate.entryName));
+      if (!entry) return res.status(415).json({ error: "no chat .txt found in zip" });
+      ext = "txt";
+      text = entry.getData().toString("utf8");
+    }
     if (ext === "txt" && /^\s*\[?\d{1,2}\/\d{1,2}\/\d{2}/m.test(text))
       return res.json({ count: await ingestMessages(parseWhatsApp(text), name) });
     if (ext === "txt" || ext === "vtt") {
       const date = deriveTranscriptDate(text, name);
-      return res.json({
-        count: await ingestTranscript(parseTranscript(text, "teams", name), name, date),
-      });
+      return res.json(await ingestTranscript(parseTranscript(text, "teams", name), name, date));
     }
     if (ext === "eml") {
       const mail = await simpleParser(req.file.buffer);
@@ -52,9 +60,9 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       const transcript = await transcribe(req.file.buffer, name);
       const date = deriveTranscriptDate(transcript, name);
       return res.json({
-        count: transcript
+        ...(transcript
           ? await ingestTranscript(parseTranscript(transcript, "teams", name), name, date)
-          : 0,
+          : { count: 0 }),
       });
     }
     return res.status(415).json({ error: "unsupported file" });

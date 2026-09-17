@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import AdmZip from "adm-zip";
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 
@@ -88,6 +91,35 @@ describe("parsers and chunker", () => {
     expect(rows).toHaveLength(1);
     db.prepare("DELETE FROM chunks WHERE message_id=?").run(rows[0].id);
     db.prepare("DELETE FROM messages WHERE id=?").run(rows[0].id);
+  });
+
+  it("deduplicates repeated demo WhatsApp imports", async () => {
+    const demo = fs.readFileSync(
+      path.resolve(process.cwd(), "../demo/whatsapp-group-export.txt"),
+      "utf8",
+    );
+    const messages = parseWhatsApp(demo);
+    const name = `Demo dedup ${Date.now()}`;
+    const first = await ingestMessages(messages, name);
+    const second = await ingestMessages(messages, name);
+    expect(first).toBe(messages.length);
+    expect(second).toBe(0);
+    const source = db
+      .prepare("SELECT id FROM sources WHERE kind=? AND name=?")
+      .get("whatsapp", name) as { id: number };
+    db.prepare("DELETE FROM chunks WHERE source_id=?").run(source.id);
+    db.prepare("DELETE FROM messages WHERE source_id=?").run(source.id);
+    db.prepare("DELETE FROM sources WHERE id=?").run(source.id);
+  });
+
+  it("imports a WhatsApp txt from a zip upload", async () => {
+    const zip = new AdmZip();
+    zip.addFile("WhatsApp Chat.txt", Buffer.from("20/03/24, 18:30 - Maya: Zip upload import test"));
+    const response = await request(app)
+      .post("/api/ingest/upload")
+      .attach("file", zip.toBuffer(), "whatsapp-export.zip");
+    expect(response.status).toBe(200);
+    expect(response.body.count).toBeGreaterThan(0);
   });
 
   it("extracts @eco and /ask questions", () => {
