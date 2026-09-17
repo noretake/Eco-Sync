@@ -10,6 +10,7 @@ const schema = z.object({
   DATA_DIR: z.string().default("./data"),
   LLM_BASE_URL: z.string().default("https://api.openai.com/v1"),
   LLM_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
   LLM_MODEL: z.string().default("gpt-4o-mini"),
   EMBED_MODEL: z.string().default("text-embedding-3-small"),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
@@ -40,9 +41,18 @@ const schema = z.object({
   TEAMS_TEAM_ID: z.string().optional(),
   TEAMS_CHANNEL_ID: z.string().optional(),
   TEAMS_POLL_SECONDS: z.coerce.number().default(300),
+  SEED_DEMO: z
+    .string()
+    .transform((v) => v === "true")
+    .default("false"),
 });
-export const config = schema.parse(process.env);
+const parsedConfig = schema.parse(process.env);
+export const config = {
+  ...parsedConfig,
+  LLM_API_KEY: parsedConfig.LLM_API_KEY || parsedConfig.OPENAI_API_KEY,
+};
 export const provider =
-  config.LLM_API_KEY || config.LLM_BASE_URL !== "https://api.openai.com/v1"
+  process.env.NODE_ENV !== "test" &&
+  (config.LLM_API_KEY || config.LLM_BASE_URL !== "https://api.openai.com/v1")
     ? "openai-compatible"
     : "none";

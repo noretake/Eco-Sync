@@ -25,7 +25,7 @@ npm run seed
 npm run dev
 ```
 
-Open http://localhost:5173. No API key is required: lexical mode uses FTS5 and returns matching context. Set `LLM_API_KEY` for an OpenAI-compatible endpoint, or set `LLM_BASE_URL=http://localhost:11434/v1` for Ollama.
+Open http://localhost:5173. No API key is required: lexical mode uses FTS5 and returns matching context. Set `LLM_API_KEY` for an OpenAI-compatible endpoint; `OPENAI_API_KEY` is also accepted as a fallback. Or set `LLM_BASE_URL=http://localhost:11434/v1` for Ollama.
 
 ## Demo script (2 min)
 
@@ -48,6 +48,8 @@ WhatsApp Cloud API cannot read group chats. Eco Sync can instead connect one gro
 4. Pick the group in the dashboard. New group messages are ingested, and anyone can type `@eco <question>` to receive an answer.
 
 This uses unofficial WhatsApp Web automation. Prefer a spare WhatsApp number and expect WhatsApp policy or compatibility changes. The host needs Chrome; set `PUPPETEER_EXECUTABLE_PATH` when Chrome is not at `/usr/bin/google-chrome`. The Docker image installs Chromium and sets `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`. Set `WHATSAPP_BACKFILL_LIMIT` to control the initial message import.
+
+For a deployed demo, set `SEED_DEMO=true`; the server seeds the bundled fixtures on boot only when the configured database has no messages. Set `DATA_DIR=/data` when using persistent container storage.
 
 For email, provide IMAP and SMTP host/user/password settings plus `EMAIL_BOT_ADDRESS`. The poller ingests unread mail; subjects beginning `Eco Sync:` or mail to the bot receive a response.
 

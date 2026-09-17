@@ -10,6 +10,7 @@ import { startEmail } from "./connectors/email.js";
 import { startTeams } from "./connectors/teams.js";
 import { startWhatsAppWeb } from "./connectors/whatsappWeb.js";
 import whatsappRouter from "./routes/whatsapp.js";
+import { seedDemo } from "./seed.js";
 
 export const app = express();
 app.use(cors());
@@ -28,6 +29,10 @@ startWhatsApp(app);
 startEmail();
 startTeams(app);
 if (config.WHATSAPP_WEB_ENABLED) startWhatsAppWeb();
+const messageCount = db.prepare("SELECT COUNT(*) AS count FROM messages").get() as {
+  count: number;
+};
+if (config.SEED_DEMO && messageCount.count === 0) await seedDemo();
 if (process.env.NODE_ENV !== "test")
   app.listen(config.PORT, () => console.log(`Eco Sync listening on ${config.PORT}`));
 export { db };
