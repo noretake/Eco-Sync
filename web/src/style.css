@@ -203,6 +203,17 @@ button {
   cursor: pointer;
   white-space: nowrap;
 }
+.session-login {
+  border: 1px solid #376653;
+  border-radius: 7px;
+  padding: 8px 10px;
+  background: #17382d;
+  color: #b8d7cb;
+  font-size: 11px;
+}
+.session-login:hover {
+  color: #65e7ae;
+}
 .session-row {
   display: flex;
   align-items: center;
@@ -243,11 +254,35 @@ button {
   color: #e6f5ef;
 }
 .auth-card {
+  position: relative;
   width: min(420px, 100%);
   padding: 32px;
   border: 1px solid #21483a;
   border-radius: 14px;
   background: #0c211c;
+}
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(3 12 9 / 78%);
+}
+.auth-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: 0;
+  padding: 2px 7px;
+  background: transparent;
+  color: #86a69a;
+  font-size: 24px;
+  line-height: 1;
+}
+.auth-modal-close:hover {
+  color: #65e7ae;
 }
 .auth-brand {
   justify-content: center;

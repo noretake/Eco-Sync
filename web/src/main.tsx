@@ -73,9 +73,13 @@ function adminHeaders(): Record<string, string> {
 function AuthScreen({
   accessCodeRequired,
   onAuthenticated,
+  modal = false,
+  onClose,
 }: {
   accessCodeRequired: boolean;
   onAuthenticated: (user: User) => void;
+  modal?: boolean;
+  onClose?: () => void;
 }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
@@ -84,6 +88,15 @@ function AuthScreen({
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!modal) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [modal, onClose]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -103,64 +116,79 @@ function AuthScreen({
     onAuthenticated(body.user);
   };
 
-  return (
-    <div className="auth-screen">
-      <div className="auth-card">
-        <div className="brand auth-brand">
-          <Logo />
-          <span>
-            Eco <b>Sync</b>
-          </span>
-        </div>
-        <p className="tag">Your group's memory, in sync.</p>
-        <div className="auth-tabs">
-          <button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
-            Log in
-          </button>
-          <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>
-            Sign up
-          </button>
-        </div>
-        <form className="auth-form" onSubmit={submit}>
-          {mode === "signup" && (
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Name"
-              required
-            />
-          )}
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Email"
-            required
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Password (8+ characters)"
-            minLength={8}
-            required
-          />
-          {mode === "signup" && accessCodeRequired && (
-            <input
-              value={accessCode}
-              onChange={(event) => setAccessCode(event.target.value)}
-              placeholder="Group access code"
-              required
-            />
-          )}
-          <button type="submit" disabled={busy}>
-            {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Log in"}
-          </button>
-          {error && <p className="auth-error">{error}</p>}
-        </form>
+  const card = (
+    <div className="auth-card">
+      {modal && (
+        <button className="auth-modal-close" aria-label="Close" onClick={onClose}>
+          ×
+        </button>
+      )}
+      <div className="brand auth-brand">
+        <Logo />
+        <span>
+          Eco <b>Sync</b>
+        </span>
       </div>
+      <p className="tag">Your group's memory, in sync.</p>
+      <div className="auth-tabs">
+        <button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
+          Log in
+        </button>
+        <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>
+          Sign up
+        </button>
+      </div>
+      <form className="auth-form" onSubmit={submit}>
+        {mode === "signup" && (
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Name"
+            required
+          />
+        )}
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="Email"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Password (8+ characters)"
+          minLength={8}
+          required
+        />
+        {mode === "signup" && accessCodeRequired && (
+          <input
+            value={accessCode}
+            onChange={(event) => setAccessCode(event.target.value)}
+            placeholder="Group access code"
+            required
+          />
+        )}
+        <button type="submit" disabled={busy}>
+          {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Log in"}
+        </button>
+        {error && <p className="auth-error">{error}</p>}
+      </form>
     </div>
   );
+
+  if (modal) {
+    return (
+      <div
+        className="auth-modal"
+        onMouseDown={(event) => event.target === event.currentTarget && onClose?.()}
+      >
+        {card}
+      </div>
+    );
+  }
+  return <div className="auth-screen">{card}</div>;
 }
 
 function WhatsAppAdmin({
@@ -248,18 +276,21 @@ function App() {
   const [member, setMember] = useState<User>();
   const [authRequired, setAuthRequired] = useState(false);
   const [accessCodeRequired, setAccessCodeRequired] = useState(false);
-  const [authLoading, setAuthLoading] = useState(!isAdminPage);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [conversationId, setConversationId] = useState<number>();
   const [uploadState, setUploadState] = useState<UploadState>({ status: "idle", message: "" });
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    { type: "ask"; value: string } | { type: "catchup" } | undefined
+  >();
 
   const loadStats = () =>
     apiFetch("/api/stats")
       .then((response) => response.json())
       .then(setStats);
 
-  const loadConversations = async () => {
-    if (!member) return;
+  const loadConversations = async (user = member) => {
+    if (!user) return;
     const response = await apiFetch("/api/conversations");
     if (response.ok) setConversations(await response.json());
   };
@@ -276,7 +307,6 @@ function App() {
         setMember(value.user ?? undefined);
         setAuthRequired(value.authRequired);
         setAccessCodeRequired(value.accessCodeRequired);
-        setAuthLoading(false);
       });
   }, []);
 
@@ -373,47 +403,93 @@ function App() {
     await loadConversations();
   };
 
-  const ask = async (value = question) => {
-    if (!value.trim()) return;
+  const requestLogin = (action: { type: "ask"; value: string } | { type: "catchup" }) => {
+    setMember(undefined);
+    setConversations([]);
+    setAuthRequired(true);
+    setPendingAction(action);
+    setAuthModalOpen(true);
+  };
+
+  const performAsk = async (value: string, user?: User) => {
     setBusy(true);
     const response = await apiFetch("/api/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ question: value, conversationId }),
-    }).then((result) => result.json());
+    });
+    if (response.status === 401) {
+      setBusy(false);
+      requestLogin({ type: "ask", value });
+      return;
+    }
+    const body = await response.json();
     setMessages((current) => [
       ...current,
       {
         question: value,
-        answer: response.answer ?? response.error,
-        sources: response.sources ?? [],
+        answer: body.answer ?? body.error,
+        sources: body.sources ?? [],
       },
     ]);
-    if (response.conversationId) setConversationId(response.conversationId);
+    if (body.conversationId) setConversationId(body.conversationId);
     setQuestion("");
     setBusy(false);
-    await loadConversations();
+    await loadConversations(user);
   };
 
-  const catchup = async () => {
+  const ask = async (value = question) => {
+    if (!value.trim()) return;
+    if (!isAdminPage && authRequired && !member) {
+      requestLogin({ type: "ask", value });
+      return;
+    }
+    await performAsk(value);
+  };
+
+  const performCatchup = async (user?: User) => {
     setBusy(true);
     const since = new Date(Date.now() - Number(range) * 864e5).toISOString();
     const response = await apiFetch("/api/catchup", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ since, conversationId }),
-    }).then((result) => result.json());
+    });
+    if (response.status === 401) {
+      setBusy(false);
+      requestLogin({ type: "catchup" });
+      return;
+    }
+    const body = await response.json();
     setMessages((current) => [
       ...current,
       {
         question: `Catch me up on the last ${range} days`,
-        answer: response.answer,
-        sources: response.sources ?? [],
+        answer: body.answer,
+        sources: body.sources ?? [],
       },
     ]);
-    if (response.conversationId) setConversationId(response.conversationId);
+    if (body.conversationId) setConversationId(body.conversationId);
     setBusy(false);
-    await loadConversations();
+    await loadConversations(user);
+  };
+
+  const catchup = async () => {
+    if (!isAdminPage && authRequired && !member) {
+      requestLogin({ type: "catchup" });
+      return;
+    }
+    await performCatchup();
+  };
+
+  const handleAuthenticated = async (user: User) => {
+    setMember(user);
+    setAuthModalOpen(false);
+    const action = pendingAction;
+    setPendingAction(undefined);
+    await loadConversations(user);
+    if (action?.type === "ask") await performAsk(action.value, user);
+    if (action?.type === "catchup") await performCatchup(user);
   };
 
   const upload = async (file: File, input: HTMLInputElement) => {
@@ -481,18 +557,6 @@ function App() {
     newSession();
   };
 
-  if (!isAdminPage && authLoading) {
-    return <div className="auth-screen">Loading Eco Sync…</div>;
-  }
-  if (!isAdminPage && authRequired && !member) {
-    return (
-      <AuthScreen
-        accessCodeRequired={accessCodeRequired}
-        onAuthenticated={(user) => setMember(user)}
-      />
-    );
-  }
-
   const compactWhatsAppStatus =
     whatsapp?.state === "ready" && whatsapp.targetGroup
       ? `WhatsApp group: ${whatsapp.targetGroup} · connected`
@@ -517,29 +581,41 @@ function App() {
             <b>{stats.find((stat) => stat.channel === channel)?.count ?? 0}</b>
           </div>
         ))}
-        {!isAdminPage && member && (
+        {!isAdminPage && (
           <section className="sessions">
-            <div className="sessions-heading">
-              <h3>YOUR SESSIONS</h3>
-              <button onClick={newSession}>＋ New session</button>
-            </div>
-            {conversations.length === 0 ? (
-              <p className="whatsapp-muted">No saved sessions yet.</p>
-            ) : (
-              conversations.map((conversation) => (
-                <div className="session-row" key={conversation.id}>
-                  <button onClick={() => void loadConversation(conversation.id)}>
-                    {conversation.title}
-                  </button>
-                  <button
-                    className="session-delete"
-                    aria-label={`Delete ${conversation.title}`}
-                    onClick={() => void deleteConversation(conversation.id)}
-                  >
-                    ×
-                  </button>
+            {member ? (
+              <>
+                <div className="sessions-heading">
+                  <h3>YOUR SESSIONS</h3>
+                  <button onClick={newSession}>＋ New session</button>
                 </div>
-              ))
+                {conversations.length === 0 ? (
+                  <p className="whatsapp-muted">No saved sessions yet.</p>
+                ) : (
+                  conversations.map((conversation) => (
+                    <div className="session-row" key={conversation.id}>
+                      <button onClick={() => void loadConversation(conversation.id)}>
+                        {conversation.title}
+                      </button>
+                      <button
+                        className="session-delete"
+                        aria-label={`Delete ${conversation.title}`}
+                        onClick={() => void deleteConversation(conversation.id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                )}
+              </>
+            ) : (
+              <>
+                <h3>YOUR SESSIONS</h3>
+                <p className="whatsapp-muted">Sign in to save your sessions</p>
+                <button className="session-login" onClick={() => setAuthModalOpen(true)}>
+                  Log in / Sign up
+                </button>
+              </>
             )}
           </section>
         )}
@@ -567,11 +643,14 @@ function App() {
                 : "AI mode"}
           </span>
           <span className="member-footer">
-            {!isAdminPage && member && (
-              <>
-                {member.name} · <button onClick={() => void logoutMember()}>Log out</button>
-              </>
-            )}
+            {!isAdminPage &&
+              (member ? (
+                <>
+                  {member.name} · <button onClick={() => void logoutMember()}>Log out</button>
+                </>
+              ) : (
+                <button onClick={() => setAuthModalOpen(true)}>Log in</button>
+              ))}
             <a href={isAdminPage ? "/" : "/admin"}>{isAdminPage ? "Back to search" : "Admin"}</a>
           </span>
         </small>
@@ -706,6 +785,14 @@ function App() {
             <button>{busy ? "..." : "Send ↗"}</button>
           </form>
         </main>
+      )}
+      {!isAdminPage && authModalOpen && (
+        <AuthScreen
+          modal
+          accessCodeRequired={accessCodeRequired}
+          onAuthenticated={handleAuthenticated}
+          onClose={() => setAuthModalOpen(false)}
+        />
       )}
     </div>
   );
