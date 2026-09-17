@@ -24,6 +24,11 @@ type WhatsAppStatus = {
   error?: string;
 };
 
+type Health = {
+  provider: "none" | "openai-compatible";
+  llm: "ok" | string;
+};
+
 const Logo = () => (
   <svg viewBox="0 0 40 40" className="logo">
     <path
@@ -43,11 +48,26 @@ function App() {
   const [busy, setBusy] = useState(false);
   const [range, setRange] = useState("24");
   const [whatsapp, setWhatsapp] = useState<WhatsAppStatus>();
+  const [health, setHealth] = useState<Health>();
 
   useEffect(() => {
     fetch("/api/stats")
       .then((response) => response.json())
       .then(setStats);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const load = () =>
+      fetch("/api/health")
+        .then((response) => response.json())
+        .then((value) => active && setHealth(value));
+    load();
+    const timer = window.setInterval(load, 5000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -203,7 +223,13 @@ function App() {
           </select>
           <button onClick={catchup}>Summarize</button>
         </div>
-        <small>Lexical mode is ready without API keys.</small>
+        <small>
+          {health?.llm.startsWith("degraded:")
+            ? "AI degraded"
+            : health?.provider === "none"
+              ? "Keyword mode"
+              : "AI mode"}
+        </small>
       </aside>
       <main>
         <header>

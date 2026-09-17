@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { answer, catchUp } from "../rag/answer.js";
 import { db } from "../db/index.js";
+import { provider } from "../llm/provider.js";
+import { llmHealth } from "../llm/status.js";
 const router = Router();
 router.post("/chat", async (req, res) => {
   try {
@@ -21,6 +23,7 @@ router.post("/catchup", async (req, res) => {
 router.get("/stats", (_req, res) =>
   res.json(db.prepare("SELECT channel,COUNT(*) count FROM messages GROUP BY channel").all()),
 );
+router.get("/health", (_req, res) => res.json({ ok: true, provider, llm: llmHealth() }));
 router.get("/messages", (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 50, 200),
     channel = req.query.channel as string | undefined;

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { app } from "./index.js";
 import { chunkMessages } from "./ingest/chunk.js";
@@ -91,5 +91,23 @@ describe("parsers and chunker", () => {
     expect(extractQuestion("@eco When is the meeting?")).toBe("When is the meeting?");
     expect(extractQuestion("/ask  where is the venue?")).toBe("where is the venue?");
     expect(extractQuestion("hello group")).toBeNull();
+  });
+
+  it("falls back to lexical bullets when the LLM fails", async () => {
+    vi.doMock("./llm/provider.js", () => ({
+      provider: "openai-compatible",
+      embed: vi.fn().mockResolvedValue(undefined),
+      complete: vi.fn().mockRejectedValue(new Error("LLM 429 insufficient_quota")),
+    }));
+    vi.resetModules();
+    const { answer: answerWithFailure } = await import("./rag/answer.js");
+
+    const result = await answerWithFailure("When is the next meeting?");
+    const bullets = result.answer.split("\n").filter((line) => line.startsWith("• "));
+    expect(bullets.length).toBeGreaterThan(0);
+    expect(result.answer).toContain("AI answers unavailable (HTTP 429)");
+
+    vi.doUnmock("./llm/provider.js");
+    vi.resetModules();
   });
 });

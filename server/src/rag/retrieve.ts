@@ -1,5 +1,6 @@
 import { db } from "../db/index.js";
 import { embed } from "../llm/provider.js";
+import { noteLlmError } from "../llm/status.js";
 type Row = {
   id: number;
   channel: string;
@@ -34,7 +35,12 @@ export async function retrieve(query: string, k = 8, channel?: string) {
       `SELECT c.*,bm25(chunks_fts) rank FROM chunks_fts JOIN chunks c ON c.id=chunks_fts.rowid WHERE chunks_fts MATCH ? ${channel ? "AND c.channel=?" : ""} ORDER BY rank LIMIT 20`,
     )
     .all(...(channel ? [match, channel] : [match])) as Row[];
-  const e = await embed(query);
+  let e: number[] | undefined;
+  try {
+    e = await embed(query);
+  } catch (error) {
+    noteLlmError(error);
+  }
   const all = e
     ? (db
         .prepare(`SELECT * FROM chunks ${channel ? "WHERE channel=?" : ""}`)

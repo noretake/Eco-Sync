@@ -1,5 +1,6 @@
 import { db } from "../db/index.js";
 import { provider, complete } from "../llm/provider.js";
+import { llmErrorSequence, llmLastError, noteLlmError } from "../llm/status.js";
 import { formatHumanTimestamp } from "../ingest/chunk.js";
 import { retrieve } from "./retrieve.js";
 
@@ -79,6 +80,7 @@ function lexicalAnswer(
     sent_at: string;
     content: string;
   }>,
+  footer = "Lexical mode — add LLM_API_KEY for AI-written answers.",
 ) {
   const queryTerms = terms(question);
   const candidates = rows.flatMap((row) =>
@@ -109,33 +111,59 @@ function lexicalAnswer(
     .slice(0, 5);
 
   if (!selected.length) {
-    return "I couldn't find that in the group's memory.\n\nLexical mode — add LLM_API_KEY for AI-written answers.";
+    return `I couldn't find that in the group's memory.\n\n${footer}`;
   }
   return `${selected
     .map((line) => `• ${line.sender} (${channelLabel(line.channel)}, ${line.date}): ${line.text}`)
-    .join("\n")}\n\nLexical mode — add LLM_API_KEY for AI-written answers.`;
+    .join("\n")}\n\n${footer}`;
+}
+
+function lexicalCatchUp(
+  rows: Array<{ channel: string; sender: string; sent_at: string; text: string }>,
+  footer: string,
+) {
+  return `${rows
+    .map((row) => `- ${new Date(row.sent_at).toLocaleDateString()} ${row.sender}: ${row.text}`)
+    .join("\n")}\n\n${footer}`;
 }
 
 export async function answer(question: string, channel?: string) {
+  const errorsBeforeRetrieval = llmErrorSequence();
   const rows = await retrieve(question, 8, channel);
   const sources = rows.map(sourceOf);
   if (provider === "none") {
     return { answer: lexicalAnswer(question, rows), sources };
   }
+  if (llmErrorSequence() !== errorsBeforeRetrieval) {
+    const reason = `AI answers unavailable (${llmLastError()}) — showing matched messages.`;
+    return { answer: lexicalAnswer(question, rows, reason), sources };
+  }
 
   const context = rows.map((row, index) => `[${index + 1}] ${row.content}`).join("\n\n");
-  const text = await complete([
-    {
-      role: "system",
-      content:
-        "You are Eco Sync, the group's memory. Answer only from context; cite sources as [channel · sender · date]; if not found say so.",
-    },
-    {
-      role: "user",
-      content: `Context:\n${context}\n\nQuestion: ${question}`,
-    },
-  ]);
-  return { answer: text, sources };
+  try {
+    const text = await complete([
+      {
+        role: "system",
+        content:
+          "You are Eco Sync, the group's memory. Answer only from context; cite sources as [channel · sender · date]; if not found say so.",
+      },
+      {
+        role: "user",
+        content: `Context:\n${context}\n\nQuestion: ${question}`,
+      },
+    ]);
+    return { answer: text, sources };
+  } catch (error) {
+    const reason = noteLlmError(error);
+    return {
+      answer: lexicalAnswer(
+        question,
+        rows,
+        `AI answers unavailable (${reason}) — showing matched messages.`,
+      ),
+      sources,
+    };
+  }
 }
 
 export async function catchUp(since: Date, channel?: string) {
@@ -153,22 +181,31 @@ export async function catchUp(since: Date, channel?: string) {
   if (!rows.length) return { answer: "No messages found in that period.", sources: [] };
   if (provider === "none") {
     return {
-      answer: rows
-        .map((row) => `- ${new Date(row.sent_at).toLocaleDateString()} ${row.sender}: ${row.text}`)
-        .join("\n"),
+      answer: lexicalCatchUp(rows, "Lexical mode — add LLM_API_KEY for AI-written answers."),
       sources: rows.slice(0, 8).map(sourceOf),
     };
   }
   const digest = rows
     .map((row) => `[${formatHumanTimestamp(row.sent_at, true)}] ${row.sender}: ${row.text}`)
     .join("\n");
-  const text = await complete([
-    {
-      role: "system",
-      content:
-        "You are Eco Sync, the group's memory. Summarise the messages below as short bullet lists under the headings Decisions, Open questions, Deadlines & action items. Mention who said what and the date.",
-    },
-    { role: "user", content: digest },
-  ]);
-  return { answer: text, sources: rows.slice(0, 8).map(sourceOf) };
+  try {
+    const text = await complete([
+      {
+        role: "system",
+        content:
+          "You are Eco Sync, the group's memory. Summarise the messages below as short bullet lists under the headings Decisions, Open questions, Deadlines & action items. Mention who said what and the date.",
+      },
+      { role: "user", content: digest },
+    ]);
+    return { answer: text, sources: rows.slice(0, 8).map(sourceOf) };
+  } catch (error) {
+    const reason = noteLlmError(error);
+    return {
+      answer: lexicalCatchUp(
+        rows,
+        `AI answers unavailable (${reason}) — showing matched messages.`,
+      ),
+      sources: rows.slice(0, 8).map(sourceOf),
+    };
+  }
 }

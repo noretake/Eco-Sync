@@ -1,7 +1,17 @@
 import { db, source } from "../db/index.js";
 import { embed } from "../llm/provider.js";
+import { noteLlmError } from "../llm/status.js";
 import { chunkMessages, chunkTranscript } from "./chunk.js";
 import { normalize, type NormalizedMessage } from "./normalize.js";
+
+async function safeEmbed(content: string) {
+  try {
+    return await embed(content);
+  } catch (error) {
+    noteLlmError(error);
+    return undefined;
+  }
+}
 
 export async function ingestMessages(messages: NormalizedMessage[], name = "API") {
   if (!messages.length) return 0;
@@ -51,7 +61,7 @@ export async function ingestMessages(messages: NormalizedMessage[], name = "API"
       });
 
   for (const chunk of chunks) {
-    const embedding = await embed(chunk.content);
+    const embedding = await safeEmbed(chunk.content);
     insertChunk.run(
       chunk.messageId ?? null,
       chunk.sourceId,
@@ -91,7 +101,7 @@ export async function ingestTranscript(
     );
   }
   for (const chunk of chunkTranscript(normalized, sid, sourceDate)) {
-    const embedding = await embed(chunk.content);
+    const embedding = await safeEmbed(chunk.content);
     insertChunk.run(
       null,
       sid,
