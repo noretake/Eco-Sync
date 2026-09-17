@@ -165,6 +165,141 @@ button {
 .back-link:hover {
   color: #65e7ae;
 }
+.member-footer {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.member-footer button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #9dd8bd;
+  font: inherit;
+  cursor: pointer;
+}
+.member-footer button:hover {
+  color: #65e7ae;
+}
+.sessions {
+  border-top: 1px solid #21483a;
+  margin-top: 12px;
+  padding-top: 4px;
+}
+.sessions-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+.sessions-heading h3 {
+  margin-top: 0;
+}
+.sessions-heading button {
+  border: 0;
+  background: transparent;
+  color: #9dd8bd;
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+}
+.session-row > button:first-child {
+  flex: 1;
+  overflow: hidden;
+  padding: 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #b8d7cb;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.session-row > button:first-child:hover {
+  background: #17382d;
+}
+.session-delete {
+  border: 0;
+  background: transparent;
+  color: #72958a;
+  cursor: pointer;
+}
+.session-delete:hover {
+  color: #f28b8b;
+}
+.auth-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at 70% 0, #123a2d 0, #081713 40%);
+  color: #e6f5ef;
+}
+.auth-card {
+  width: min(420px, 100%);
+  padding: 32px;
+  border: 1px solid #21483a;
+  border-radius: 14px;
+  background: #0c211c;
+}
+.auth-brand {
+  justify-content: center;
+}
+.auth-card > .tag {
+  text-align: center;
+}
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 26px 0 16px;
+  border-bottom: 1px solid #21483a;
+}
+.auth-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 10px 14px;
+  background: transparent;
+  color: #86a69a;
+  cursor: pointer;
+}
+.auth-tabs button.active {
+  border-bottom-color: #65e7ae;
+  color: #65e7ae;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.auth-form input {
+  width: 100%;
+  border: 1px solid #38614f;
+  border-radius: 7px;
+  background: #102a22;
+  color: #e6f5ef;
+  padding: 11px 12px;
+  outline: 0;
+  font-size: 14px;
+}
+.auth-form button {
+  min-height: 42px;
+  margin-top: 4px;
+}
+.auth-error {
+  margin: 3px 0 0;
+  color: #f28b8b;
+  font-size: 12px;
+}
 .admin-panel {
   max-width: 620px;
   width: 100%;

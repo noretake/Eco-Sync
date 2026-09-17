@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
-import { app } from "./index.js";
-import { chunkMessages } from "./ingest/chunk.js";
-import { parseTranscript } from "./ingest/parsers/vtt.js";
-import { parseWhatsApp } from "./ingest/parsers/whatsappExport.js";
-import { answer } from "./rag/answer.js";
-import { db } from "./db/index.js";
-import { ingestMessages } from "./ingest/pipeline.js";
-import { extractQuestion } from "./connectors/whatsappWeb.js";
+
+process.env.AUTH_REQUIRED = "false";
+
+const { app } = await import("./index.js");
+const { chunkMessages } = await import("./ingest/chunk.js");
+const { parseTranscript } = await import("./ingest/parsers/vtt.js");
+const { parseWhatsApp } = await import("./ingest/parsers/whatsappExport.js");
+const { answer } = await import("./rag/answer.js");
+const { db } = await import("./db/index.js");
+const { ingestMessages } = await import("./ingest/pipeline.js");
+const { extractQuestion } = await import("./connectors/whatsappWeb.js");
 
 describe("parsers and chunker", () => {
   it("parses WhatsApp formats and strips system lines", () => {

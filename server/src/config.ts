@@ -12,6 +12,11 @@ const schema = z.object({
   LLM_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   ADMIN_TOKEN: z.string().optional(),
+  GROUP_ACCESS_CODE: z.string().optional(),
+  AUTH_REQUIRED: z
+    .string()
+    .transform((v) => v === "true")
+    .default("true"),
   LLM_MODEL: z.string().default("gpt-4o-mini"),
   EMBED_MODEL: z.string().default("text-embedding-3-small"),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),

@@ -63,6 +63,13 @@ Set `ADMIN_TOKEN` to protect WhatsApp linking and uploads, then open `/admin`:
 For the Render deployment, add `ADMIN_TOKEN` to the Render service environment variables. If it is
 unset, `/admin` remains open for local setup.
 
+## Members and saved chats
+
+Members sign up with the group access code, and their chats are saved per account. Set
+`GROUP_ACCESS_CODE` to require a code during signup. `AUTH_REQUIRED=true` requires members to log in
+before searching; set `AUTH_REQUIRED=false` to make search public while keeping account sessions
+available.
+
 For email, provide IMAP and SMTP host/user/password settings plus `EMAIL_BOT_ADDRESS`. The poller ingests unread mail; subjects beginning `Eco Sync:` or mail to the bot receive a response.
 
 Teams requires an Azure app registration with client credentials, Graph `ChannelMessage.Read.All` and online meeting transcript permissions, and the IDs in `.env`. The included client polls a channel and exposes `/webhooks/teams` for Bot Framework-style activities. Azure approval and tenant configuration are required.

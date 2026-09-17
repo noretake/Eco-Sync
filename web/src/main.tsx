@@ -16,6 +16,18 @@ type Reply = {
   sources: Source[];
 };
 
+type User = {
+  id: number;
+  name: string;
+  email: string;
+};
+
+type Conversation = {
+  id: number;
+  title: string;
+  updated_at: string;
+};
+
 type WhatsAppStatus = {
   state: "disabled" | "starting" | "qr" | "authenticated" | "ready" | "disconnected";
   qr?: string;
@@ -31,6 +43,10 @@ type Health = {
 };
 
 const isAdminPage = window.location.pathname === "/admin";
+
+function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, { ...init, credentials: "same-origin" });
+}
 
 const Logo = () => (
   <svg viewBox="0 0 40 40" className="logo">
@@ -49,6 +65,99 @@ function adminHeaders(): Record<string, string> {
   return token ? { "x-admin-token": token } : {};
 }
 
+function AuthScreen({
+  accessCodeRequired,
+  onAuthenticated,
+}: {
+  accessCodeRequired: boolean;
+  onAuthenticated: (user: User) => void;
+}) {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    setBusy(true);
+    const response = await apiFetch(`/api/auth/${mode}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name, email, password, accessCode }),
+    });
+    const body = await response.json();
+    setBusy(false);
+    if (!response.ok) {
+      setError(body.error ?? "Unable to continue.");
+      return;
+    }
+    onAuthenticated(body.user);
+  };
+
+  return (
+    <div className="auth-screen">
+      <div className="auth-card">
+        <div className="brand auth-brand">
+          <Logo />
+          <span>
+            Eco <b>Sync</b>
+          </span>
+        </div>
+        <p className="tag">Your group's memory, in sync.</p>
+        <div className="auth-tabs">
+          <button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
+            Log in
+          </button>
+          <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>
+            Sign up
+          </button>
+        </div>
+        <form className="auth-form" onSubmit={submit}>
+          {mode === "signup" && (
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Name"
+              required
+            />
+          )}
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="Email"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Password (8+ characters)"
+            minLength={8}
+            required
+          />
+          {mode === "signup" && accessCodeRequired && (
+            <input
+              value={accessCode}
+              onChange={(event) => setAccessCode(event.target.value)}
+              placeholder="Group access code"
+              required
+            />
+          )}
+          <button type="submit" disabled={busy}>
+            {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Log in"}
+          </button>
+          {error && <p className="auth-error">{error}</p>}
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function WhatsAppAdmin({
   status,
   onStatus,
@@ -57,7 +166,7 @@ function WhatsAppAdmin({
   onStatus: (value: WhatsAppStatus) => void;
 }) {
   const selectGroup = (group: string) => {
-    fetch("/api/whatsapp/group", {
+    apiFetch("/api/whatsapp/group", {
       method: "POST",
       headers: { "content-type": "application/json", ...adminHeaders() },
       body: JSON.stringify({ group }),
@@ -67,7 +176,7 @@ function WhatsAppAdmin({
   };
 
   const logout = () => {
-    fetch("/api/whatsapp/logout", {
+    apiFetch("/api/whatsapp/logout", {
       method: "POST",
       headers: adminHeaders(),
     })
@@ -131,20 +240,44 @@ function App() {
   const [adminAuthorized, setAdminAuthorized] = useState(!isAdminPage);
   const [adminError, setAdminError] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [member, setMember] = useState<User>();
+  const [authRequired, setAuthRequired] = useState(false);
+  const [accessCodeRequired, setAccessCodeRequired] = useState(false);
+  const [authLoading, setAuthLoading] = useState(!isAdminPage);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationId, setConversationId] = useState<number>();
 
   const loadStats = () =>
-    fetch("/api/stats")
+    apiFetch("/api/stats")
       .then((response) => response.json())
       .then(setStats);
+
+  const loadConversations = async () => {
+    if (!member) return;
+    const response = await apiFetch("/api/conversations");
+    if (response.ok) setConversations(await response.json());
+  };
 
   useEffect(() => {
     void loadStats();
   }, []);
 
   useEffect(() => {
+    if (isAdminPage) return;
+    apiFetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((value) => {
+        setMember(value.user ?? undefined);
+        setAuthRequired(value.authRequired);
+        setAccessCodeRequired(value.accessCodeRequired);
+        setAuthLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
     let active = true;
     const load = () =>
-      fetch("/api/health")
+      apiFetch("/api/health")
         .then((response) => response.json())
         .then((value) => active && setHealth(value));
     void load();
@@ -156,11 +289,16 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!member || isAdminPage) return;
+    void loadConversations();
+  }, [member]);
+
+  useEffect(() => {
     if (!isAdminPage) return;
     let active = true;
     const token = window.localStorage.getItem("ecoAdminToken");
     const checkAccess = async () => {
-      const requiredResponse = await fetch("/api/admin/required");
+      const requiredResponse = await apiFetch("/api/admin/required");
       const required = (await requiredResponse.json()).required as boolean;
       if (!active) return;
       setAdminRequired(required);
@@ -172,7 +310,7 @@ function App() {
         setAdminAuthorized(false);
         return;
       }
-      const response = await fetch("/api/admin/check", { headers: adminHeaders() });
+      const response = await apiFetch("/api/admin/check", { headers: adminHeaders() });
       if (response.ok) {
         setAdminAuthorized(true);
       } else {
@@ -191,7 +329,7 @@ function App() {
     if (isAdminPage && !adminAuthorized) return;
     let active = true;
     const load = () =>
-      fetch("/api/whatsapp/status", {
+      apiFetch("/api/whatsapp/status", {
         headers: isAdminPage ? adminHeaders() : undefined,
       })
         .then((response) => response.json())
@@ -204,13 +342,38 @@ function App() {
     };
   }, [adminAuthorized]);
 
+  const loadConversation = async (id: number) => {
+    const response = await apiFetch(`/api/conversations/${id}`);
+    if (!response.ok) return;
+    const body = await response.json();
+    setConversationId(id);
+    setMessages(
+      body.turns.map((turn: { question: string; answer: string; sources: Source[] }) => ({
+        question: turn.question,
+        answer: turn.answer,
+        sources: turn.sources ?? [],
+      })),
+    );
+  };
+
+  const newSession = () => {
+    setConversationId(undefined);
+    setMessages([]);
+  };
+
+  const deleteConversation = async (id: number) => {
+    await apiFetch(`/api/conversations/${id}`, { method: "DELETE" });
+    if (conversationId === id) newSession();
+    await loadConversations();
+  };
+
   const ask = async (value = question) => {
     if (!value.trim()) return;
     setBusy(true);
-    const response = await fetch("/api/chat", {
+    const response = await apiFetch("/api/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ question: value }),
+      body: JSON.stringify({ question: value, conversationId }),
     }).then((result) => result.json());
     setMessages((current) => [
       ...current,
@@ -220,17 +383,19 @@ function App() {
         sources: response.sources ?? [],
       },
     ]);
+    if (response.conversationId) setConversationId(response.conversationId);
     setQuestion("");
     setBusy(false);
+    await loadConversations();
   };
 
   const catchup = async () => {
     setBusy(true);
     const since = new Date(Date.now() - Number(range) * 864e5).toISOString();
-    const response = await fetch("/api/catchup", {
+    const response = await apiFetch("/api/catchup", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ since }),
+      body: JSON.stringify({ since, conversationId }),
     }).then((result) => result.json());
     setMessages((current) => [
       ...current,
@@ -240,13 +405,15 @@ function App() {
         sources: response.sources ?? [],
       },
     ]);
+    if (response.conversationId) setConversationId(response.conversationId);
     setBusy(false);
+    await loadConversations();
   };
 
   const upload = (file: File) => {
     const data = new FormData();
     data.append("file", file);
-    void fetch("/api/ingest/upload", {
+    void apiFetch("/api/ingest/upload", {
       method: "POST",
       headers: adminHeaders(),
       body: data,
@@ -256,7 +423,7 @@ function App() {
   const submitAdminPassword = async (event: FormEvent) => {
     event.preventDefault();
     setAdminError("");
-    const response = await fetch("/api/admin/check", {
+    const response = await apiFetch("/api/admin/check", {
       headers: { "x-admin-token": adminPassword },
     });
     if (!response.ok) {
@@ -267,6 +434,25 @@ function App() {
     setAdminPassword("");
     setAdminAuthorized(true);
   };
+
+  const logoutMember = async () => {
+    await apiFetch("/api/auth/logout", { method: "POST" });
+    setMember(undefined);
+    setConversations([]);
+    newSession();
+  };
+
+  if (!isAdminPage && authLoading) {
+    return <div className="auth-screen">Loading Eco Sync…</div>;
+  }
+  if (!isAdminPage && authRequired && !member) {
+    return (
+      <AuthScreen
+        accessCodeRequired={accessCodeRequired}
+        onAuthenticated={(user) => setMember(user)}
+      />
+    );
+  }
 
   const compactWhatsAppStatus =
     whatsapp?.state === "ready" && whatsapp.targetGroup
@@ -292,6 +478,32 @@ function App() {
             <b>{stats.find((stat) => stat.channel === channel)?.count ?? 0}</b>
           </div>
         ))}
+        {!isAdminPage && member && (
+          <section className="sessions">
+            <div className="sessions-heading">
+              <h3>YOUR SESSIONS</h3>
+              <button onClick={newSession}>＋ New session</button>
+            </div>
+            {conversations.length === 0 ? (
+              <p className="whatsapp-muted">No saved sessions yet.</p>
+            ) : (
+              conversations.map((conversation) => (
+                <div className="session-row" key={conversation.id}>
+                  <button onClick={() => void loadConversation(conversation.id)}>
+                    {conversation.title}
+                  </button>
+                  <button
+                    className="session-delete"
+                    aria-label={`Delete ${conversation.title}`}
+                    onClick={() => void deleteConversation(conversation.id)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))
+            )}
+          </section>
+        )}
         <section className="whatsapp-web">
           <h3>WHATSAPP GROUP</h3>
           <p className={whatsapp?.state === "ready" ? "whatsapp-ready" : "whatsapp-muted"}>
@@ -315,7 +527,14 @@ function App() {
                 ? "Keyword mode"
                 : "AI mode"}
           </span>
-          <a href={isAdminPage ? "/" : "/admin"}>{isAdminPage ? "Back to search" : "Admin"}</a>
+          <span className="member-footer">
+            {!isAdminPage && member && (
+              <>
+                {member.name} · <button onClick={() => void logoutMember()}>Log out</button>
+              </>
+            )}
+            <a href={isAdminPage ? "/" : "/admin"}>{isAdminPage ? "Back to search" : "Admin"}</a>
+          </span>
         </small>
       </aside>
       {isAdminPage ? (

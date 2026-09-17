@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import path from "node:path";
 import { config } from "./config.js";
 import { db } from "./db/index.js";
@@ -11,12 +12,17 @@ import { startTeams } from "./connectors/teams.js";
 import { startWhatsAppWeb } from "./connectors/whatsappWeb.js";
 import whatsappRouter from "./routes/whatsapp.js";
 import adminRouter from "./routes/admin.js";
+import authRouter from "./routes/auth.js";
+import historyRouter from "./routes/history.js";
 import { seedDemo } from "./seed.js";
 
 export const app = express();
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use("/api", chatRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/conversations", historyRouter);
 app.use("/api/ingest", ingestRouter);
 app.use("/api", whatsappRouter);
 app.use("/api/admin", adminRouter);
