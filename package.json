@@ -1,0 +1,21 @@
+{
+  "name": "eco-sync",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev --workspace server\" \"npm run dev --workspace web\"",
+    "build": "npm run build --workspace web && npm run build --workspace server",
+    "test": "npm run test --workspace server",
+    "lint": "npm run lint --workspace server && npm run lint --workspace web",
+    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web",
+    "seed": "npm run seed --workspace server",
+    "format": "prettier --write \"server/src/**/*\" \"web/src/**/*\" \"*.json\" \"*.md\""
+  },
+  "devDependencies": {
+    "concurrently": "9.1.2",
+    "prettier": "3.4.2"
+  }
+}

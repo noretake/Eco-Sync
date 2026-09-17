@@ -1,0 +1,272 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root {
+  font-family: Manrope, sans-serif;
+  color: #e6f5ef;
+  background: #081713;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+.app {
+  display: flex;
+  min-height: 100vh;
+  background: radial-gradient(circle at 70% 0, #123a2d 0, #081713 40%);
+}
+aside {
+  width: 280px;
+  padding: 32px 26px;
+  background: #0c211c;
+  border-right: 1px solid #21483a;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
+}
+.brand b {
+  color: #65e7ae;
+}
+.logo {
+  width: 34px;
+  height: 34px;
+  color: #65e7ae;
+}
+.tag {
+  font-size: 12px;
+  color: #86a69a;
+  margin-top: -8px;
+}
+h3 {
+  font: 11px "DM Mono";
+  letter-spacing: 1.5px;
+  color: #72958a;
+  margin: 28px 0 0;
+}
+.stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 2px;
+  text-transform: capitalize;
+  color: #b8d7cb;
+  font-size: 14px;
+}
+.stat b {
+  color: #65e7ae;
+}
+.upload,
+button {
+  cursor: pointer;
+}
+.upload {
+  border: 1px dashed #3a6a59;
+  border-radius: 10px;
+  padding: 13px;
+  text-align: center;
+  color: #9dd8bd;
+  font-size: 13px;
+  margin-top: 24px;
+}
+.upload input {
+  display: none;
+}
+.catch {
+  border-top: 1px solid #21483a;
+  margin-top: 14px;
+}
+.catch select,
+.catch button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 7px;
+  background: #17382d;
+  border: 1px solid #376653;
+  color: #cae7dc;
+}
+.catch button {
+  background: #65e7ae;
+  color: #0b261c;
+  border: 0;
+  font-weight: 700;
+}
+.aside small,
+small {
+  color: #66877d;
+  font-size: 11px;
+  margin-top: auto;
+}
+main {
+  max-width: 920px;
+  flex: 1;
+  margin: auto;
+  padding: 54px 8%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+h1 {
+  font-size: 29px;
+  margin: 0 0 6px;
+}
+header p {
+  margin: 0;
+  color: #86a69a;
+}
+.online {
+  font: 11px "DM Mono";
+  color: #65e7ae;
+}
+.chat {
+  flex: 1;
+  padding: 48px 0;
+}
+.welcome {
+  text-align: center;
+  max-width: 630px;
+  margin: 12vh auto;
+}
+.welcome .logo {
+  width: 48px;
+  height: 48px;
+}
+.welcome h2 {
+  font-size: 25px;
+  margin: 18px 0 8px;
+}
+.welcome p {
+  color: #86a69a;
+}
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 30px;
+}
+.suggestions button {
+  text-align: left;
+  padding: 14px 17px;
+  border: 1px solid #2c5647;
+  border-radius: 9px;
+  background: #0d251f;
+  color: #b9d8cc;
+}
+.suggestions span {
+  float: right;
+  color: #65e7ae;
+}
+.reply {
+  margin-bottom: 25px;
+}
+.bubble {
+  white-space: pre-wrap;
+  background: #14372b;
+  border: 1px solid #285744;
+  padding: 18px 20px;
+  border-radius: 3px 14px 14px 14px;
+  line-height: 1.6;
+  color: #d9eee6;
+}
+.sources {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+.sources details {
+  font-size: 11px;
+  color: #75bd9d;
+  background: #102a22;
+  border-radius: 5px;
+  padding: 5px 8px;
+}
+.sources summary {
+  cursor: pointer;
+}
+.sources p {
+  max-width: 500px;
+  white-space: pre-wrap;
+  color: #a8c7bb;
+}
+form {
+  display: flex;
+  gap: 10px;
+  border: 1px solid #38614f;
+  border-radius: 11px;
+  padding: 6px;
+  background: #0c211c;
+}
+form input {
+  flex: 1;
+  background: none;
+  border: 0;
+  padding: 12px;
+  color: white;
+  outline: 0;
+  font-size: 14px;
+}
+form button {
+  border: 0;
+  border-radius: 7px;
+  background: #65e7ae;
+  color: #092219;
+  font-weight: 700;
+  padding: 0 17px;
+}
+@media (max-width: 700px) {
+  aside {
+    width: 210px;
+    padding: 20px 15px;
+  }
+  main {
+    padding: 30px 4%;
+  }
+  h1 {
+    font-size: 21px;
+  }
+}
+.user-bubble {
+  margin: 0 0 9px auto;
+  width: max-content;
+  max-width: 80%;
+  white-space: pre-wrap;
+  background: #65e7ae;
+  color: #092219;
+  padding: 12px 16px;
+  border-radius: 14px 14px 3px 14px;
+  line-height: 1.5;
+}
+.loading {
+  color: #86a69a;
+  font-size: 13px;
+  padding: 8px 0;
+}
+.loading span {
+  display: inline-block;
+  width: 18px;
+  overflow: hidden;
+  animation: ellipsis 1s steps(4, end) infinite;
+}
+@keyframes ellipsis {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 18px;
+  }
+}

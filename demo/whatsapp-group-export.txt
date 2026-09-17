@@ -1,0 +1,75 @@
+12/03/24, 10:15 - Maya: Welcome to GreenHub Community! We are planning the March tree fundraiser.
+12/03/24, 10:18 - Leo: What day should we hold the planning meeting?
+12/03/24, 10:22 - Maya: Wednesday 20 March works for me.
+12/03/24, 10:25 - Priya: I can bring the first draft of the volunteer roster.
+12/03/24, 10:31 - Jonah: I will ask Riverside Nursery about seedling prices.
+12/03/24, 10:35 - Sam: I joined using this group's invite link
+12/03/24, 11:00 - Maya: The fundraiser target should cover native tree seedlings.
+12/03/24, 11:05 - Leo: Can we make the meeting 18:30? I finish work at six.
+12/03/24, 11:09 - Maya: Yes, moved to Wednesday 20 March at 18:30.
+12/03/24, 11:30 - Priya: I will share a signup form tonight.
+13/03/24, 08:10 - Jonah: Riverside Nursery can supply native seedlings.
+13/03/24, 08:20 - Priya: The volunteer signup deadline is Sunday 17 March at 18:00.
+13/03/24, 08:35 - Sam: I can coordinate the market table.
+13/03/24, 09:10 - Priya: The fundraiser target is $2,000 for native tree seedlings.
+13/03/24, 09:14 - Jonah: I vote we partner with Riverside Nursery.
+13/03/24, 09:18 - Maya: Decision: we will partner with Riverside Nursery and sell seedlings at the market.
+13/03/24, 10:00 - Leo: What was decided about the nursery?
+13/03/24, 10:05 - Maya: We decided to partner with Riverside Nursery.
+13/03/24, 16:20 - Priya: Signup form: https://forms.example.org/greenhub-volunteers
+14/03/24, 09:00 - Sam: I can bring reusable signs.
+14/03/24, 09:15 - Maya: Please add your availability before Sunday evening.
+14/03/24, 10:10 - Leo: Has the meeting time changed again?
+14/03/24, 10:12 - Maya: No, it remains Wednesday 20 March at 18:30.
+14/03/24, 12:00 - Jonah: I am checking whether the hall has enough tables.
+14/03/24, 13:10 - Priya: The budget for signs and printing is still open.
+14/03/24, 13:15 - Leo: Do we have a budget for printed signs?
+14/03/24, 13:20 - Maya: We can spend up to $150 on signs and printing.
+15/03/24, 08:45 - Priya: The venue is GreenHub Hall, 14 River Street, upstairs room.
+15/03/24, 09:00 - Sam: Is the venue GreenHub Hall?
+15/03/24, 09:03 - Maya: Yes, GreenHub Hall at 14 River Street, upstairs room.
+15/03/24, 09:30 - Jonah: The hall manager confirmed access from 17:30.
+15/03/24, 11:00 - Leo: I can bring a cash box.
+15/03/24, 14:10 - Maya: Please keep receipts for all purchases.
+15/03/24, 16:00 - Priya: The signup list currently has eight volunteers.
+16/03/24, 08:00 - Jonah: Shared doc: https://docs.example.org/greenhub-plan
+16/03/24, 08:05 - Priya: I added the volunteer roster to the shared doc.
+16/03/24, 09:15 - Maya: The event announcement is ready for review.
+16/03/24, 10:20 - Sam: What was decided about the fundraiser?
+16/03/24, 10:25 - Maya: Riverside Nursery, a $2,000 target, and the market stall were decided.
+16/03/24, 12:10 - Leo: <Media omitted>
+16/03/24, 15:30 - Priya: I can manage the welcome table.
+17/03/24, 08:00 - Maya: Volunteer signup closes today at 18:00.
+17/03/24, 08:30 - Jonah: I will handle tables and signs.
+17/03/24, 09:00 - Sam: I can bring seedlings from Riverside Nursery.
+17/03/24, 10:00 - Priya: Nine people have signed up so far.
+17/03/24, 11:20 - Leo: What time is the meeting?
+17/03/24, 11:25 - Maya: Wednesday 20 March at 18:30, GreenHub Hall.
+17/03/24, 13:00 - Priya: We still need someone to photograph the market stall.
+17/03/24, 14:15 - Sam: I can take photos.
+17/03/24, 17:55 - Maya: Final reminder for volunteer signup.
+17/03/24, 18:05 - Priya: Signup is now closed with eleven volunteers.
+18/03/24, 09:00 - Priya: We need three people for setup at 17:30.
+18/03/24, 09:04 - Jonah: I can handle tables and signs.
+18/03/24, 09:10 - Sam: I can bring seedlings from Riverside Nursery.
+18/03/24, 10:30 - Maya: The shared plan has the final task list.
+18/03/24, 12:00 - Leo: Should we print fifty or one hundred flyers?
+18/03/24, 12:10 - Maya: Print fifty flyers; that stays within the $150 signs and printing budget.
+18/03/24, 15:00 - Priya: The hall has six folding tables available.
+18/03/24, 17:20 - Sam: <Media omitted>
+19/03/24, 08:20 - Maya: Reminder: meeting tomorrow at 18:30.
+19/03/24, 08:25 - Leo: Is tomorrow's meeting at GreenHub Hall?
+19/03/24, 08:28 - Maya: Correct, GreenHub Hall, 14 River Street.
+19/03/24, 10:00 - Priya: Fundraiser materials are ready.
+19/03/24, 11:10 - Jonah: I uploaded the final task list to the shared doc.
+19/03/24, 15:30 - Sam: I will collect seedlings at 16:45.
+19/03/24, 16:20 - Maya: Please bring reusable signs and a water bottle.
+20/03/24, 09:00 - Priya: The cash box and receipt book are ready.
+20/03/24, 09:05 - Jonah: I have the printed task list.
+20/03/24, 09:10 - Sam: See everyone at 18:30.
+20/03/24, 17:30 - Maya: Setup is starting in the upstairs room.
+20/03/24, 18:30 - Leo: We are ready to begin.
+20/03/24, 20:00 - Maya: Great meeting. We confirmed the nursery partnership and $2,000 target.
+21/03/24, 08:00 - Priya: The market stall raised $640 in the first morning.
+21/03/24, 08:20 - Jonah: I will update the shared doc with sales totals.
+21/03/24, 09:15 - Maya: Next check-in is Monday 25 March at 18:00 online.

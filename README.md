@@ -1,0 +1,59 @@
+# Eco Sync
+
+Eco Sync is a hackathon chatbot that turns WhatsApp exports, email, and Microsoft Teams conversations into a searchable group memory. It answers in a web dashboard and has webhook/poller hooks for each channel. It runs fully with zero keys in lexical mode, or adds grounded OpenAI-compatible answers and embeddings when configured.
+
+## Architecture → folders
+
+| Layer           | Folders                                                         |
+| --------------- | --------------------------------------------------------------- |
+| Data sources    | `server/src/connectors/`                                        |
+| Ingestion       | `server/src/ingest/`                                            |
+| Processing      | `server/src/ingest/chunk.ts`, `server/src/ingest/normalize.ts`  |
+| Knowledge store | `server/src/db/`                                                |
+| AI layer        | `server/src/llm/`, `server/src/rag/`                            |
+| User access     | `web/`, `server/src/routes/`, `server/src/connectors/` webhooks |
+| Infra           | `Dockerfile`, `docker-compose.yml`                              |
+
+## Quick start
+
+```bash
+git clone <repo>
+cd Eco-Sync
+npm install
+cp .env.example .env
+npm run seed
+npm run dev
+```
+
+Open http://localhost:5173. No API key is required: lexical mode uses FTS5 and returns matching context. Set `LLM_API_KEY` for an OpenAI-compatible endpoint, or set `LLM_BASE_URL=http://localhost:11434/v1` for Ollama.
+
+## Demo script (2 min)
+
+1. Ask **“When is the next meeting?”** to show the changed time, venue, and source chips.
+2. Ask **“What did we decide about the fundraiser?”** to show the nursery partnership and target.
+3. Ask **“Where is the event venue?”** to show the GreenHub Hall address.
+4. Click **Catch me up**, choose a time range, and show the decisions, questions, and deadlines summary.
+
+## Connecting channels
+
+For WhatsApp Cloud API, create a Meta app, set `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_TOKEN`, and `WHATSAPP_PHONE_NUMBER_ID`, expose port 8787 with `ngrok http 8787`, and configure the callback as `/webhooks/whatsapp` with `messages` subscribed. `@eco` and `/ask` messages receive replies; `WHATSAPP_REPLY_ALL=true` replies to every inbound text.
+
+For email, provide IMAP and SMTP host/user/password settings plus `EMAIL_BOT_ADDRESS`. The poller ingests unread mail; subjects beginning `Eco Sync:` or mail to the bot receive a response.
+
+Teams requires an Azure app registration with client credentials, Graph `ChannelMessage.Read.All` and online meeting transcript permissions, and the IDs in `.env`. The included client polls a channel and exposes `/webhooks/teams` for Bot Framework-style activities. Azure approval and tenant configuration are required.
+
+## How it works
+
+Incoming messages are normalized, grouped into approximately 1,500-character chunks, indexed in SQLite FTS5, and optionally embedded. Queries fuse lexical and vector ranks. The answer prompt only receives retrieved chunks and cites channel, sender, and date. Without a provider, an extractive answer is returned.
+
+## Maintenance
+
+The database is `data/ecosync.db` (WAL enabled). Delete `data/` and run `npm run seed` to reset the demo. Run `npm test`, `npm run typecheck`, and `npm run build`.
+
+## Project structure
+
+`server/` API, storage, ingestion, connectors, and tests; `web/` Vite React dashboard; `demo/` zero-key fixtures; `Dockerfile` and `docker-compose.yml` container setup.
+
+## Team / licence
+
+Team: _add names here_. Licence: _choose a licence here_.

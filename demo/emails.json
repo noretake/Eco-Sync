@@ -1,0 +1,50 @@
+[
+  {
+    "channel": "email",
+    "sender": "Maya <maya@greenhub.test>",
+    "sentAt": "2024-03-12T08:00:00Z",
+    "text": "Eco Sync: the next GreenHub meeting is Wednesday 20 March at 18:30."
+  },
+  {
+    "channel": "email",
+    "sender": "Priya <priya@greenhub.test>",
+    "sentAt": "2024-03-13T08:00:00Z",
+    "text": "The fundraiser target is $2,000 for native tree seedlings."
+  },
+  {
+    "channel": "email",
+    "sender": "Jonah <jonah@greenhub.test>",
+    "sentAt": "2024-03-14T08:00:00Z",
+    "text": "The venue is GreenHub Hall, 14 River Street, upstairs room."
+  },
+  {
+    "channel": "email",
+    "sender": "Priya <priya@greenhub.test>",
+    "sentAt": "2024-03-15T08:00:00Z",
+    "text": "Volunteer signup closes Sunday 17 March at 18:00. Please add your availability."
+  },
+  {
+    "channel": "email",
+    "sender": "Leo <leo@greenhub.test>",
+    "sentAt": "2024-03-16T08:00:00Z",
+    "text": "Do we have a budget for printed signs?"
+  },
+  {
+    "channel": "email",
+    "sender": "Maya <maya@greenhub.test>",
+    "sentAt": "2024-03-16T09:00:00Z",
+    "text": "We can spend up to $150 on signs and printing. Please keep receipts."
+  },
+  {
+    "channel": "email",
+    "sender": "Sam <sam@greenhub.test>",
+    "sentAt": "2024-03-19T08:00:00Z",
+    "text": "Re: GreenHub meeting\n\nThe venue is GreenHub Hall and setup starts at 17:30.\n\nOn 15 March, Priya wrote:\n> The venue is GreenHub Hall, 14 River Street, upstairs room.\n> Please add your availability before Sunday evening.\n\nSee you tomorrow."
+  },
+  {
+    "channel": "email",
+    "sender": "Maya <maya@greenhub.test>",
+    "sentAt": "2024-03-21T08:00:00Z",
+    "text": "The market stall raised $640 in the first morning. Our next check-in is Monday 25 March at 18:00 online."
+  }
+]
