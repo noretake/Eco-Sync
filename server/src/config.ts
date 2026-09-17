@@ -11,6 +11,7 @@ const schema = z.object({
   LLM_BASE_URL: z.string().default("https://api.openai.com/v1"),
   LLM_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
+  ADMIN_TOKEN: z.string().optional(),
   LLM_MODEL: z.string().default("gpt-4o-mini"),
   EMBED_MODEL: z.string().default("text-embedding-3-small"),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),

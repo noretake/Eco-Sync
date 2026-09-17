@@ -10,6 +10,7 @@ import { startEmail } from "./connectors/email.js";
 import { startTeams } from "./connectors/teams.js";
 import { startWhatsAppWeb } from "./connectors/whatsappWeb.js";
 import whatsappRouter from "./routes/whatsapp.js";
+import adminRouter from "./routes/admin.js";
 import { seedDemo } from "./seed.js";
 
 export const app = express();
@@ -18,6 +19,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use("/api", chatRouter);
 app.use("/api/ingest", ingestRouter);
 app.use("/api", whatsappRouter);
+app.use("/api/admin", adminRouter);
 app.get("/health", (_req, res) => res.json({ ok: true }));
 const webDist = path.resolve(process.cwd(), "web/dist");
 app.use(express.static(webDist));

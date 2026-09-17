@@ -51,6 +51,18 @@ This uses unofficial WhatsApp Web automation. Prefer a spare WhatsApp number and
 
 For a deployed demo, set `SEED_DEMO=true`; the server seeds the bundled fixtures on boot only when the configured database has no messages. Set `DATA_DIR=/data` when using persistent container storage.
 
+## Admin setup (one-time)
+
+Set `ADMIN_TOKEN` to protect WhatsApp linking and uploads, then open `/admin`:
+
+1. Set `ADMIN_TOKEN` in `.env` (or in the Render service environment).
+2. Open `http://localhost:5173/admin` and enter the admin password.
+3. Scan the WhatsApp QR code and choose the group to connect.
+4. Members can open the root URL to search without admin access.
+
+For the Render deployment, add `ADMIN_TOKEN` to the Render service environment variables. If it is
+unset, `/admin` remains open for local setup.
+
 For email, provide IMAP and SMTP host/user/password settings plus `EMAIL_BOT_ADDRESS`. The poller ingests unread mail; subjects beginning `Eco Sync:` or mail to the bot receive a response.
 
 Teams requires an Azure app registration with client credentials, Graph `ChannelMessage.Read.All` and online meeting transcript permissions, and the IDs in `.env`. The included client polls a channel and exposes `/webhooks/teams` for Bot Framework-style activities. Azure approval and tenant configuration are required.

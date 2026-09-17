@@ -5,8 +5,12 @@ import { parseWhatsApp } from "../ingest/parsers/whatsappExport.js";
 import { deriveTranscriptDate, parseTranscript } from "../ingest/parsers/vtt.js";
 import { transcribe } from "../llm/transcribe.js";
 import { simpleParser } from "mailparser";
+import { requireAdmin } from "./admin.js";
+
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
+router.use(requireAdmin);
+
 router.post("/messages", async (req, res) => {
   try {
     res.json({ count: await ingestMessages(req.body.messages ?? req.body) });
