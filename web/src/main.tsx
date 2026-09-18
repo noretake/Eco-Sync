@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { createRoot } from "react-dom/client";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import "./style.css";
 
@@ -754,7 +755,9 @@ function App() {
               <article className="reply" key={index}>
                 <div className="user-bubble">{message.question}</div>
                 <div className="bubble">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.answer}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                    {message.answer}
+                  </ReactMarkdown>
                 </div>
                 <div className="sources">
                   {message.sources.map((source, sourceIndex) => (
