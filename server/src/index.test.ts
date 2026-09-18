@@ -1,10 +1,13 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import AdmZip from "adm-zip";
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 
 process.env.AUTH_REQUIRED = "false";
+process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ecosync-test-"));
+process.env.SEED_DEMO = "true";
 
 const { app } = await import("./index.js");
 const { chunkMessages } = await import("./ingest/chunk.js");
@@ -100,6 +103,9 @@ describe("parsers and chunker", () => {
     );
     const messages = parseWhatsApp(demo);
     const name = `Demo dedup ${Date.now()}`;
+    db.exec(
+      "DELETE FROM chunks WHERE source_id IN (SELECT id FROM sources WHERE kind='whatsapp'); DELETE FROM messages WHERE source_id IN (SELECT id FROM sources WHERE kind='whatsapp'); DELETE FROM sources WHERE kind='whatsapp';",
+    );
     const first = await ingestMessages(messages, name);
     const second = await ingestMessages(messages, name);
     expect(first).toBe(messages.length);

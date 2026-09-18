@@ -1,6 +1,11 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import request from "supertest";
 
+process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ecosync-test-"));
+process.env.SEED_DEMO = "true";
 process.env.ADMIN_TOKEN = "test-admin-token";
 
 const { app } = await import("./index.js");

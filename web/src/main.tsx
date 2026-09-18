@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { createRoot } from "react-dom/client";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./style.css";
 
 type Source = {
@@ -751,7 +753,9 @@ function App() {
             {messages.map((message, index) => (
               <article className="reply" key={index}>
                 <div className="user-bubble">{message.question}</div>
-                <div className="bubble">{message.answer}</div>
+                <div className="bubble">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.answer}</ReactMarkdown>
+                </div>
                 <div className="sources">
                   {message.sources.map((source, sourceIndex) => (
                     <details key={sourceIndex}>
