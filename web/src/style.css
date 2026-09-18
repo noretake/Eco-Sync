@@ -245,6 +245,59 @@ button {
 .session-delete:hover {
   color: #f28b8b;
 }
+.agent-connect {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.agent-connect h3 {
+  margin-top: 0;
+}
+.agent-url {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 6px;
+  border-radius: 5px;
+  background: #17382d;
+  color: #b8d7cb;
+  font: 10px "DM Mono";
+}
+.agent-label {
+  width: 100%;
+  padding: 7px;
+  border: 1px solid #376653;
+  border-radius: 7px;
+  background: #17382d;
+  color: #cae7dc;
+  font-size: 11px;
+}
+.agent-token {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.agent-token input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px;
+  border: 1px solid #376653;
+  border-radius: 7px;
+  background: #17382d;
+  color: #65e7ae;
+  font: 10px "DM Mono";
+}
+.agent-token p {
+  flex-basis: 100%;
+  margin: 0;
+}
+.agent-key {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  color: #b8d7cb;
+  font-size: 11px;
+}
 .auth-screen {
   display: grid;
   min-height: 100vh;

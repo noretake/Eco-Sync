@@ -11,6 +11,7 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
     "adm-zip": "0.6.0",
     "better-sqlite3": "12.4.1",
     "cookie-parser": "^1.4.7",

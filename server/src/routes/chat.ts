@@ -49,7 +49,7 @@ router.get("/messages", (req, res) => {
   );
 });
 
-function saveTurn(
+export function saveTurn(
   userId: number | undefined,
   requestedConversationId: unknown,
   question: string,

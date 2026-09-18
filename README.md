@@ -77,6 +77,31 @@ Members sign up with the group access code, and their chats are saved per accoun
 before searching; set `AUTH_REQUIRED=false` to make search public while keeping account sessions
 available.
 
+## Use from AI agents (MCP)
+
+Eco Sync exposes a remote MCP endpoint at `https://<host>/mcp`. Configure your personal API key in
+the `Authorization: Bearer <key>` header. The available tools are `ask_group`, `catch_up`, and
+`search_messages`.
+
+For Claude Desktop or Cursor:
+
+```json
+{
+  "mcpServers": {
+    "eco-sync": {
+      "url": "https://eco-sync-xrgs.onrender.com/mcp",
+      "headers": {
+        "Authorization": "Bearer eco_..."
+      }
+    }
+  }
+}
+```
+
+```bash
+claude mcp add --transport http eco-sync https://eco-sync-xrgs.onrender.com/mcp --header "Authorization: Bearer eco_..."
+```
+
 For email, provide IMAP and SMTP host/user/password settings plus `EMAIL_BOT_ADDRESS`. The poller ingests unread mail; subjects beginning `Eco Sync:` or mail to the bot receive a response.
 
 Teams requires an Azure app registration with client credentials, Graph `ChannelMessage.Read.All` and online meeting transcript permissions, and the IDs in `.env`. The included client polls a channel and exposes `/webhooks/teams` for Bot Framework-style activities. Azure approval and tenant configuration are required.

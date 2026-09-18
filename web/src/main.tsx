@@ -31,6 +31,14 @@ type Conversation = {
   updated_at: string;
 };
 
+type ApiKey = {
+  id: number;
+  prefix: string;
+  label: string;
+  created_at: string;
+  last_used_at: string | null;
+};
+
 type PendingAction = { type: "ask"; value: string } | { type: "catchup" };
 
 type WhatsAppStatus = {
@@ -324,6 +332,10 @@ function App() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [conversationId, setConversationId] = useState<number>();
   const [uploadState, setUploadState] = useState<UploadState>({ status: "idle", message: "" });
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [apiKeyLabel, setApiKeyLabel] = useState("My agent");
+  const [newApiKey, setNewApiKey] = useState("");
+  const [apiKeyBusy, setApiKeyBusy] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>();
   const [initialAuthError, setInitialAuthError] = useState("");
@@ -337,6 +349,12 @@ function App() {
     if (!user) return;
     const response = await apiFetch("/api/conversations");
     if (response.ok) setConversations(await response.json());
+  };
+
+  const loadApiKeys = async (user = member) => {
+    if (!user) return;
+    const response = await apiFetch("/api/keys");
+    if (response.ok) setApiKeys(await response.json());
   };
 
   useEffect(() => {
@@ -401,6 +419,7 @@ function App() {
   useEffect(() => {
     if (!member || isAdminPage) return;
     void loadConversations();
+    void loadApiKeys();
   }, [member]);
 
   useEffect(() => {
@@ -634,7 +653,29 @@ function App() {
     await apiFetch("/api/auth/logout", { method: "POST" });
     setMember(undefined);
     setConversations([]);
+    setApiKeys([]);
+    setNewApiKey("");
     newSession();
+  };
+
+  const createApiKey = async () => {
+    setApiKeyBusy(true);
+    const response = await apiFetch("/api/keys", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ label: apiKeyLabel.trim() || "My agent" }),
+    });
+    if (response.ok) {
+      const body = await response.json();
+      setNewApiKey(body.token);
+      await loadApiKeys();
+    }
+    setApiKeyBusy(false);
+  };
+
+  const deleteApiKey = async (id: number) => {
+    await apiFetch(`/api/keys/${id}`, { method: "DELETE" });
+    await loadApiKeys();
   };
 
   const compactWhatsAppStatus =
@@ -697,6 +738,48 @@ function App() {
                 </button>
               </>
             )}
+          </section>
+        )}
+        {!isAdminPage && member && (
+          <section className="sessions agent-connect">
+            <h3>CONNECT YOUR AI AGENT</h3>
+            <p className="whatsapp-muted">Use Eco Sync from Claude, Copilot or Cursor via MCP.</p>
+            <code className="agent-url">{location.origin}/mcp</code>
+            <input
+              className="agent-label"
+              value={apiKeyLabel}
+              onChange={(event) => setApiKeyLabel(event.target.value)}
+              placeholder="Key label"
+            />
+            <button
+              className="session-login"
+              onClick={() => void createApiKey()}
+              disabled={apiKeyBusy}
+            >
+              {apiKeyBusy ? "Creating…" : "Create API key"}
+            </button>
+            {newApiKey && (
+              <div className="agent-token">
+                <input value={newApiKey} readOnly aria-label="New API key" />
+                <button
+                  className="session-login"
+                  onClick={() => void navigator.clipboard?.writeText(newApiKey)}
+                >
+                  Copy
+                </button>
+                <p className="whatsapp-muted">Copy it now — it won't be shown again.</p>
+              </div>
+            )}
+            {apiKeys.map((key) => (
+              <div className="agent-key" key={key.id}>
+                <span>
+                  {key.label} · {key.prefix}…
+                </span>
+                <button className="session-delete" onClick={() => void deleteApiKey(key.id)}>
+                  delete ×
+                </button>
+              </div>
+            ))}
           </section>
         )}
         <section className="whatsapp-web">

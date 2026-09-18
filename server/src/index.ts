@@ -14,6 +14,9 @@ import whatsappRouter from "./routes/whatsapp.js";
 import adminRouter from "./routes/admin.js";
 import authRouter from "./routes/auth.js";
 import historyRouter from "./routes/history.js";
+import apiKeysRouter from "./routes/apiKeys.js";
+import { mcpHandler } from "./mcp.js";
+import { requireUser } from "./auth.js";
 import { seedDemo } from "./seed.js";
 
 export const app = express();
@@ -24,10 +27,12 @@ app.use(express.json({ limit: "10mb" }));
 app.use("/api", chatRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/conversations", historyRouter);
+app.use("/api/keys", apiKeysRouter);
 app.use("/api/ingest", ingestRouter);
 app.use("/api", whatsappRouter);
 app.use("/api/admin", adminRouter);
 app.get("/health", (_req, res) => res.json({ ok: true }));
+app.all("/mcp", requireUser, mcpHandler);
 const webDist = path.resolve(process.cwd(), "web/dist");
 app.use(express.static(webDist));
 app.get("*", (_req, res, next) => {
