@@ -741,8 +741,8 @@ function App() {
                 <div className="suggestions">
                   {[
                     "When is the next meeting?",
-                    "What did we decide about the fundraiser?",
-                    "Where is the event venue?",
+                    "When is the Next Wadwhani meeting?",
+                    "How do we Navigate the program easily?",
                   ].map((suggestion) => (
                     <button onClick={() => void ask(suggestion)} key={suggestion}>
                       {suggestion} <span>→</span>
