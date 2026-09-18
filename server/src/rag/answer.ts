@@ -144,8 +144,13 @@ export async function answer(question: string, channel?: string) {
     const text = await complete([
       {
         role: "system",
-        content:
-          "You are Eco Sync, the group's memory. Answer only from context; cite sources as [channel · sender · date]; if not found say so.",
+        content: [
+          "You are Eco Sync, a friendly assistant that remembers everything discussed in the group's WhatsApp chats, emails and meetings.",
+          "The context contains group messages that may be relevant to the question.",
+          "If the question is about the group (plans, decisions, people, events, dates, what was said), answer from the context and cite sources as [channel · sender · date]. If the context does not cover it, say clearly that it hasn't been discussed in the group.",
+          "If the question is a greeting, small talk, or a general question unrelated to the group (e.g. general knowledge, how to phrase something), respond naturally and helpfully using your own knowledge, ignoring the context. Do not tell the user the context lacks information in that case.",
+          "Be concise.",
+        ].join(" "),
       },
       {
         role: "user",
