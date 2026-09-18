@@ -308,6 +308,40 @@ button {
   border-bottom-color: #65e7ae;
   color: #65e7ae;
 }
+.google-access-code {
+  width: 100%;
+  margin-bottom: 11px;
+  border: 1px solid #38614f;
+  border-radius: 7px;
+  background: #102a22;
+  color: #e6f5ef;
+  padding: 11px 12px;
+  outline: 0;
+  font-size: 14px;
+}
+.google-button {
+  width: 100%;
+  border: 1px solid #c9d6d0;
+  border-radius: 7px;
+  padding: 10px;
+  background: #fff;
+  color: #111;
+  font-weight: 600;
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  color: #72958a;
+  font-size: 12px;
+}
+.auth-divider span:first-child,
+.auth-divider span:last-child {
+  height: 1px;
+  flex: 1;
+  background: #21483a;
+}
 .auth-form {
   display: flex;
   flex-direction: column;

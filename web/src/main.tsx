@@ -31,6 +31,8 @@ type Conversation = {
   updated_at: string;
 };
 
+type PendingAction = { type: "ask"; value: string } | { type: "catchup" };
+
 type WhatsAppStatus = {
   state: "disabled" | "starting" | "qr" | "authenticated" | "ready" | "disconnected";
   qr?: string;
@@ -75,11 +77,17 @@ function adminHeaders(): Record<string, string> {
 
 function AuthScreen({
   accessCodeRequired,
+  googleEnabled,
+  pendingAction,
+  initialError,
   onAuthenticated,
   modal = false,
   onClose,
 }: {
   accessCodeRequired: boolean;
+  googleEnabled: boolean;
+  pendingAction?: PendingAction;
+  initialError?: string;
   onAuthenticated: (user: User) => void;
   modal?: boolean;
   onClose?: () => void;
@@ -91,6 +99,10 @@ function AuthScreen({
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (initialError) setError(initialError);
+  }, [initialError]);
 
   useEffect(() => {
     if (!modal) return;
@@ -119,6 +131,15 @@ function AuthScreen({
     onAuthenticated(body.user);
   };
 
+  const googleLogin = () => {
+    if (pendingAction) {
+      window.sessionStorage.setItem("eco_pending", JSON.stringify(pendingAction));
+    } else {
+      window.sessionStorage.removeItem("eco_pending");
+    }
+    window.location.assign(`/api/auth/google/start?accessCode=${encodeURIComponent(accessCode)}`);
+  };
+
   const card = (
     <div className="auth-card">
       {modal && (
@@ -141,6 +162,26 @@ function AuthScreen({
           Sign up
         </button>
       </div>
+      {googleEnabled && accessCodeRequired && (
+        <input
+          className="google-access-code"
+          value={accessCode}
+          onChange={(event) => setAccessCode(event.target.value)}
+          placeholder="Group access code (first Google sign-in only)"
+        />
+      )}
+      {googleEnabled && (
+        <>
+          <button type="button" className="google-button" onClick={googleLogin}>
+            Continue with Google
+          </button>
+          <div className="auth-divider">
+            <span />
+            <span>or</span>
+            <span />
+          </div>
+        </>
+      )}
       <form className="auth-form" onSubmit={submit}>
         {mode === "signup" && (
           <input
@@ -279,13 +320,13 @@ function App() {
   const [member, setMember] = useState<User>();
   const [authRequired, setAuthRequired] = useState(false);
   const [accessCodeRequired, setAccessCodeRequired] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [conversationId, setConversationId] = useState<number>();
   const [uploadState, setUploadState] = useState<UploadState>({ status: "idle", message: "" });
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<
-    { type: "ask"; value: string } | { type: "catchup" } | undefined
-  >();
+  const [pendingAction, setPendingAction] = useState<PendingAction>();
+  const [initialAuthError, setInitialAuthError] = useState("");
 
   const loadStats = () =>
     apiFetch("/api/stats")
@@ -304,12 +345,42 @@ function App() {
 
   useEffect(() => {
     if (isAdminPage) return;
+    const errorMessages: Record<string, string> = {
+      state: "Sign-in expired, please try again.",
+      access_code: "That group access code is wrong — enter it and try Google again.",
+      unverified: "Your Google email isn't verified.",
+      google: "Google sign-in failed, please try again.",
+    };
+    const authError = new URLSearchParams(window.location.search).get("auth_error");
+    if (authError && errorMessages[authError]) {
+      setInitialAuthError(errorMessages[authError]);
+      setAuthModalOpen(true);
+      window.history.replaceState({}, "", "/");
+    }
     apiFetch("/api/auth/me")
       .then((response) => response.json())
-      .then((value) => {
+      .then(async (value) => {
         setMember(value.user ?? undefined);
         setAuthRequired(value.authRequired);
         setAccessCodeRequired(value.accessCodeRequired);
+        setGoogleEnabled(value.googleEnabled);
+        if (value.user) {
+          const stored = window.sessionStorage.getItem("eco_pending");
+          if (stored) {
+            try {
+              const action = JSON.parse(stored) as PendingAction;
+              if (
+                (action.type === "ask" && typeof action.value === "string") ||
+                action.type === "catchup"
+              ) {
+                window.sessionStorage.removeItem("eco_pending");
+                await replayPendingAction(action, value.user);
+              }
+            } catch {
+              window.sessionStorage.removeItem("eco_pending");
+            }
+          }
+        }
       });
   }, []);
 
@@ -411,6 +482,7 @@ function App() {
     setConversations([]);
     setAuthRequired(true);
     setPendingAction(action);
+    setInitialAuthError("");
     setAuthModalOpen(true);
   };
 
@@ -485,14 +557,19 @@ function App() {
     await performCatchup();
   };
 
-  const handleAuthenticated = async (user: User) => {
+  const replayPendingAction = async (action: PendingAction | undefined, user: User) => {
     setMember(user);
     setAuthModalOpen(false);
-    const action = pendingAction;
-    setPendingAction(undefined);
     await loadConversations(user);
     if (action?.type === "ask") await performAsk(action.value, user);
     if (action?.type === "catchup") await performCatchup(user);
+  };
+
+  const handleAuthenticated = async (user: User) => {
+    const action = pendingAction;
+    setPendingAction(undefined);
+    setInitialAuthError("");
+    await replayPendingAction(action, user);
   };
 
   const upload = async (file: File, input: HTMLInputElement) => {
@@ -797,6 +874,9 @@ function App() {
         <AuthScreen
           modal
           accessCodeRequired={accessCodeRequired}
+          googleEnabled={googleEnabled}
+          pendingAction={pendingAction}
+          initialError={initialAuthError}
           onAuthenticated={handleAuthenticated}
           onClose={() => setAuthModalOpen(false)}
         />

@@ -13,6 +13,9 @@ const schema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   ADMIN_TOKEN: z.string().optional(),
   GROUP_ACCESS_CODE: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  PUBLIC_URL: z.string().optional(),
   AUTH_REQUIRED: z
     .string()
     .transform((v) => v === "true")
@@ -57,6 +60,7 @@ export const config = {
   ...parsedConfig,
   LLM_API_KEY: parsedConfig.LLM_API_KEY || parsedConfig.OPENAI_API_KEY,
 };
+export const googleEnabled = !!(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET);
 export const provider =
   process.env.NODE_ENV !== "test" &&
   (config.LLM_API_KEY || config.LLM_BASE_URL !== "https://api.openai.com/v1")

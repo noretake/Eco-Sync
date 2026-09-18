@@ -17,6 +17,7 @@ import historyRouter from "./routes/history.js";
 import { seedDemo } from "./seed.js";
 
 export const app = express();
+app.set("trust proxy", 1);
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));

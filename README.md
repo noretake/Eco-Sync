@@ -63,6 +63,12 @@ Set `ADMIN_TOKEN` to protect WhatsApp linking and uploads, then open `/admin`:
 For the Render deployment, add `ADMIN_TOKEN` to the Render service environment variables. If it is
 unset, `/admin` remains open for local setup.
 
+### Google login (optional)
+
+Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `PUBLIC_URL` to enable Google sign-in. Add
+`https://<your-host>/api/auth/google/callback` as an authorized redirect URI in Google Cloud
+Console. `PUBLIC_URL` should be the public site URL without a trailing slash.
+
 ## Members and saved chats
 
 Members sign up with the group access code, and their chats are saved per account. Set

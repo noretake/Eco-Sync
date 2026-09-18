@@ -52,6 +52,11 @@ if (!messageColumns.some((column) => column.name === "external_id")) {
   db.exec("ALTER TABLE messages ADD COLUMN external_id TEXT");
 }
 db.exec("CREATE UNIQUE INDEX IF NOT EXISTS messages_external_id_idx ON messages(external_id)");
+const userColumns = db.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
+if (!userColumns.some((column) => column.name === "google_sub")) {
+  db.exec("ALTER TABLE users ADD COLUMN google_sub TEXT");
+}
+db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub ON users(google_sub)");
 
 export function getSetting(key: string) {
   return (
