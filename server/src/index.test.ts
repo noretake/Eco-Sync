@@ -16,7 +16,11 @@ const { parseWhatsApp } = await import("./ingest/parsers/whatsappExport.js");
 const { answer } = await import("./rag/answer.js");
 const { db } = await import("./db/index.js");
 const { ingestMessages } = await import("./ingest/pipeline.js");
-const { extractQuestion } = await import("./connectors/whatsappWeb.js");
+const {
+  extractQuestion,
+  handleDirectMessage,
+  status: whatsappStatus,
+} = await import("./connectors/whatsappWeb.js");
 
 describe("parsers and chunker", () => {
   it("parses WhatsApp formats and strips system lines", () => {
@@ -132,6 +136,46 @@ describe("parsers and chunker", () => {
     expect(extractQuestion("@eco When is the meeting?")).toBe("When is the meeting?");
     expect(extractQuestion("/ask  where is the venue?")).toBe("where is the venue?");
     expect(extractQuestion("hello group")).toBeNull();
+  });
+
+  it("rejects direct messages from non-members", async () => {
+    const replies: string[] = [];
+    whatsappStatus.targetGroup = "Demo group";
+    const message = {
+      from: "non-member@c.us",
+      fromMe: false,
+      type: "chat",
+      body: "When is the next meeting?",
+      reply: async (text: string) => {
+        replies.push(text);
+      },
+    } as never;
+    const targetGroup = {
+      participants: [{ id: { _serialized: "member@c.us" } }],
+    } as never;
+    await handleDirectMessage(message, {} as never, targetGroup);
+    expect(replies).toEqual(["Sorry, Eco Sync only answers members of the group."]);
+    whatsappStatus.targetGroup = undefined;
+  });
+
+  it("answers direct messages from group members", async () => {
+    const replies: string[] = [];
+    whatsappStatus.targetGroup = "Demo group";
+    const message = {
+      from: "member@c.us",
+      fromMe: false,
+      type: "chat",
+      body: "When is the next meeting?",
+      reply: async (text: string) => {
+        replies.push(text);
+      },
+    } as never;
+    const targetGroup = {
+      participants: [{ id: { _serialized: "member@c.us" } }],
+    } as never;
+    await handleDirectMessage(message, {} as never, targetGroup);
+    expect(replies[0]).toBeTruthy();
+    whatsappStatus.targetGroup = undefined;
   });
 
   it("falls back to lexical bullets when the LLM fails", async () => {

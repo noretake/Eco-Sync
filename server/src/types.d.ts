@@ -30,12 +30,14 @@ declare module "whatsapp-web.js" {
     id: { _serialized: string };
     name: string;
     isGroup: boolean;
+    participants?: Array<{ id: { _serialized: string } }>;
     fetchMessages(options: { limit: number }): Promise<Message[]>;
   }
   export class Message {
     id: { _serialized: string };
     type: string;
     body: string;
+    from: string;
     hasMedia: boolean;
     timestamp: number;
     fromMe: boolean;

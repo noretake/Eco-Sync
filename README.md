@@ -46,6 +46,7 @@ WhatsApp Cloud API cannot read group chats. Eco Sync can instead connect one gro
 2. Start Eco Sync with `npm run dev`; the dashboard sidebar shows the WhatsApp group connection.
 3. Scan the QR code with **WhatsApp → Linked devices → Link a device**.
 4. Pick the group in the dashboard. New group messages are ingested, and anyone can type `@eco <question>` to receive an answer.
+   Members can also message the linked number directly in plain language without `@eco`; only members of the selected group receive answers.
 
 This uses unofficial WhatsApp Web automation. Prefer a spare WhatsApp number and expect WhatsApp policy or compatibility changes. The host needs Chrome; set `PUPPETEER_EXECUTABLE_PATH` when Chrome is not at `/usr/bin/google-chrome`. The Docker image installs Chromium and sets `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`. Set `WHATSAPP_BACKFILL_LIMIT` to control the initial message import.
 

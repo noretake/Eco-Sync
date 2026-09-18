@@ -25,6 +25,7 @@ export const status: WhatsAppWebStatus = {
 
 let client: InstanceType<typeof Client> | undefined;
 let initialized = false;
+let targetChat: Chat | undefined;
 
 export function extractQuestion(body: string): string | null {
   const match = body.match(/^(@eco|\/ask)\s+(.+)$/is);
@@ -64,6 +65,31 @@ async function ingestMessage(message: Message, chat: Chat, allowReply: boolean) 
   }
 }
 
+export async function handleDirectMessage(
+  message: Message,
+  _chat: Chat,
+  selectedTargetChat = targetChat,
+) {
+  if (message.fromMe || message.type !== "chat" || !message.body.trim()) return;
+  try {
+    if (status.targetGroup && selectedTargetChat) {
+      const isParticipant =
+        selectedTargetChat.participants?.some(
+          (participant) => participant.id._serialized === message.from,
+        ) ?? false;
+      if (!isParticipant) {
+        await message.reply("Sorry, Eco Sync only answers members of the group.");
+        return;
+      }
+    }
+    const question = extractQuestion(message.body.trim()) ?? message.body.trim();
+    const result = await answer(question);
+    await message.reply(result.answer);
+  } catch (error) {
+    status.error = String(error);
+  }
+}
+
 async function backfill(chat: Chat) {
   const messages = await chat.fetchMessages({ limit: config.WHATSAPP_BACKFILL_LIMIT });
   for (const message of messages) {
@@ -97,7 +123,8 @@ async function initialize() {
     nextClient.on("ready", async () => {
       status.state = "ready";
       status.me = nextClient.info?.wid?.user;
-      const groups = (await nextClient.getChats())
+      const chats = await nextClient.getChats();
+      const groups = chats
         .filter((chat) => chat.isGroup)
         .map((chat) => ({ id: chat.id._serialized, name: chat.name }));
       status.groups = groups;
@@ -106,18 +133,18 @@ async function initialize() {
             (group) => group.name === status.targetGroup || group.id === status.targetGroup,
           )
         : undefined;
+      targetChat = undefined;
       if (target) {
         status.targetGroup = target.name;
-        const targetChat = (await nextClient.getChats()).find(
-          (chat) => chat.isGroup && chat.id._serialized === target.id,
-        );
+        targetChat = chats.find((chat) => chat.isGroup && chat.id._serialized === target.id);
         if (targetChat) await backfill(targetChat);
       }
     });
     nextClient.on("message_create", async (message) => {
       try {
         const chat = await message.getChat();
-        await ingestMessage(message, chat, true);
+        if (chat.isGroup) await ingestMessage(message, chat, true);
+        else await handleDirectMessage(message, chat);
       } catch (error) {
         status.error = String(error);
       }
@@ -127,11 +154,13 @@ async function initialize() {
       status.error = reason;
       initialized = false;
       client = undefined;
+      targetChat = undefined;
     });
     nextClient.on("auth_failure", (message) => {
       status.state = "disconnected";
       status.error = message;
       initialized = false;
+      targetChat = undefined;
     });
     await nextClient.initialize();
   } catch (error) {
@@ -139,6 +168,7 @@ async function initialize() {
     status.error = String(error);
     initialized = false;
     client = undefined;
+    targetChat = undefined;
   }
 }
 
@@ -156,6 +186,7 @@ export async function startWhatsAppWeb() {
 
 export async function setTargetGroup(group: string) {
   status.targetGroup = group || undefined;
+  targetChat = undefined;
   if (group) setSetting("whatsapp_group", group);
   else setSetting("whatsapp_group", "");
   if (status.state !== "ready" || !client) return;
@@ -164,6 +195,7 @@ export async function setTargetGroup(group: string) {
       candidate.isGroup && (candidate.name === group || candidate.id._serialized === group),
   );
   if (chat) {
+    targetChat = chat;
     status.targetGroup = chat.name;
     await backfill(chat);
   }
@@ -176,6 +208,7 @@ export async function logoutWhatsAppWeb() {
   }
   client = undefined;
   initialized = false;
+  targetChat = undefined;
   status.state = "starting";
   status.qr = undefined;
   status.me = undefined;
