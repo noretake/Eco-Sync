@@ -321,9 +321,45 @@ function WhatsAppAdmin({
     </div>
   );
 
+  const setupSteps = (
+    <details
+      className="setup-steps"
+      open={
+        status?.state === "qr" || status?.state === "disabled" || status?.state === "disconnected"
+      }
+    >
+      <summary>How to connect your WhatsApp group</summary>
+      <ol>
+        <li>
+          Use a spare phone number that is a member of the group. The bot replies from this account
+          and its profile is renamed.
+        </li>
+        <li>On that phone, open WhatsApp → ⋮ / Settings → Linked devices → Link a device.</li>
+        <li>Scan the QR code shown below. It refreshes automatically.</li>
+        <li>
+          When “Linked as …” appears, pick the group from the dropdown. Eco Sync backfills the last
+          300 messages and keeps ingesting new ones.
+        </li>
+        <li>
+          Set the Bot display name (default <code>ecosync_BOT</code>) and Save.
+        </li>
+        <li>
+          Members can now type <code>@eco &lt;question&gt;</code> or{" "}
+          <code>/ask &lt;question&gt;</code> in the group, or DM the linked number directly (members
+          of the selected group only).
+        </li>
+      </ol>
+      <p>
+        If the service restarts without a saved session you'll be asked to scan again; the link is
+        stored on the persistent disk.
+      </p>
+    </details>
+  );
+
   if (!status || status.state === "starting") {
     return (
       <>
+        {setupSteps}
         <p className="whatsapp-muted">
           <span className="spinner" /> Starting linked device…
         </p>
@@ -334,6 +370,7 @@ function WhatsAppAdmin({
   if (status.state === "disabled") {
     return (
       <>
+        {setupSteps}
         <p className="whatsapp-muted">Set WHATSAPP_WEB_ENABLED=true to connect a group.</p>
         {botNameEditor}
       </>
@@ -342,6 +379,7 @@ function WhatsAppAdmin({
   if (status.state === "qr") {
     return (
       <>
+        {setupSteps}
         {status.qr && <img className="whatsapp-qr" src={status.qr} alt="WhatsApp link QR code" />}
         <p className="whatsapp-muted">Open WhatsApp → Linked devices → Link a device</p>
         {botNameEditor}
@@ -351,6 +389,7 @@ function WhatsAppAdmin({
   if (status.state === "ready") {
     return (
       <>
+        {setupSteps}
         <p className="whatsapp-ready">Linked as {status.me}</p>
         <select
           value={status.targetGroup ?? ""}
@@ -374,6 +413,7 @@ function WhatsAppAdmin({
   }
   return (
     <>
+      {setupSteps}
       <p className="whatsapp-error">{status.error ?? "WhatsApp device disconnected."}</p>
       {botNameEditor}
     </>

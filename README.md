@@ -42,12 +42,16 @@ For WhatsApp Cloud API, create a Meta app, set `WHATSAPP_VERIFY_TOKEN`, `WHATSAP
 
 WhatsApp Cloud API cannot read group chats. Eco Sync can instead connect one group through a linked WhatsApp Web device:
 
-1. Set `WHATSAPP_WEB_ENABLED=true` and optionally `WHATSAPP_GROUP_NAME` in `.env`.
-2. Start Eco Sync with `npm run dev`; the dashboard sidebar shows the WhatsApp group connection.
-3. Scan the QR code with **WhatsApp → Linked devices → Link a device**.
-4. Pick the group in the dashboard. New group messages are ingested, and anyone can type `@eco <question>` to receive an answer.
-   Members can also message the linked number directly in plain language without `@eco`; only members of the selected group receive answers.
-   Admins can set the linked number's WhatsApp bot display name from the admin page.
+Set `WHATSAPP_WEB_ENABLED=true` and optionally `WHATSAPP_GROUP_NAME` in `.env`, then start Eco Sync with `npm run dev` and open the Admin page:
+
+1. Use a spare phone number that is a member of the group. The bot replies from this account and its profile is renamed.
+2. On that phone, open **WhatsApp → ⋮ / Settings → Linked devices → Link a device**.
+3. Scan the QR code shown on the Admin page; it refreshes automatically.
+4. When **Linked as …** appears, pick the group from the dropdown. Eco Sync backfills the last 300 messages and keeps ingesting new ones.
+5. Set the **Bot display name** (default `ecosync_BOT`) and click **Save**.
+6. Members can type `@eco <question>` or `/ask <question>` in the group, or message the linked number directly in plain language. Only members of the selected group receive answers.
+
+If the service restarts without a saved session you'll be asked to scan again; the link is stored on the persistent disk.
 
 This uses unofficial WhatsApp Web automation. Prefer a spare WhatsApp number and expect WhatsApp policy or compatibility changes. The host needs Chrome; set `PUPPETEER_EXECUTABLE_PATH` when Chrome is not at `/usr/bin/google-chrome`. The Docker image installs Chromium and sets `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`. Set `WHATSAPP_BACKFILL_LIMIT` to control the initial message import.
 

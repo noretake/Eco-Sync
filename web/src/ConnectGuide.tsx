@@ -117,6 +117,15 @@ export default function ConnectGuide() {
         </p>
         <CopyBlock value={claudeConfig} />
 
+        <h2>5. Ask from WhatsApp</h2>
+        <p>
+          In the connected group, type <code>@eco &lt;question&gt;</code> or{" "}
+          <code>/ask &lt;question&gt;</code>. You can also message the group's Eco Sync number
+          directly in plain language. Only members of the selected group get answers, and direct
+          messages are not stored.
+        </p>
+        <p>Your group admin links the number from the Admin page.</p>
+
         <h2>What you can ask</h2>
         <ul>
           <li>
