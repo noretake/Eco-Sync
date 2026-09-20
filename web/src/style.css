@@ -298,6 +298,110 @@ button {
   color: #b8d7cb;
   font-size: 11px;
 }
+.agent-guide {
+  color: #9dd8bd;
+  font-size: 11px;
+  text-decoration: none;
+}
+.agent-guide:hover {
+  color: #65e7ae;
+}
+.bot-name-row {
+  margin-top: 14px;
+}
+.bot-name-row label {
+  display: block;
+  color: #b8d7cb;
+  font-size: 12px;
+}
+.bot-name-row > div {
+  display: flex;
+  gap: 7px;
+  margin-top: 8px;
+}
+.bot-name-row input {
+  min-width: 0;
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #376653;
+  border-radius: 7px;
+  background: #17382d;
+  color: #cae7dc;
+}
+.bot-name-row .unlink {
+  width: auto;
+  margin-top: 0;
+}
+.bot-name-row p {
+  margin-bottom: 0;
+}
+.guide-page {
+  min-height: 100vh;
+  padding: 32px 20px 64px;
+  background: radial-gradient(circle at 70% 0, #123a2d 0, #081713 40%);
+}
+.guide {
+  max-width: 760px;
+  padding: 0;
+  display: block;
+  min-height: 0;
+  color: #d4ebe2;
+}
+.guide h1 {
+  margin-top: 36px;
+}
+.guide h2 {
+  margin: 34px 0 10px;
+  color: #65e7ae;
+  font-size: 20px;
+}
+.guide p,
+.guide li {
+  color: #b8d7cb;
+  line-height: 1.7;
+}
+.guide code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #17382d;
+  color: #9dd8bd;
+  font: 0.9em "DM Mono";
+}
+.guide pre {
+  min-width: 0;
+  margin: 0;
+  overflow-x: auto;
+  padding: 16px;
+  border: 1px solid #21483a;
+  border-radius: 9px;
+  background: #0c211c;
+  color: #d4ebe2;
+  font: 12px/1.6 "DM Mono";
+}
+.copy-row {
+  position: relative;
+  margin: 14px 0 20px;
+}
+.copy-row button {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  padding: 6px 10px;
+  border: 1px solid #376653;
+  border-radius: 6px;
+  background: #17382d;
+  color: #b8d7cb;
+}
+.copy-row button:hover {
+  color: #65e7ae;
+}
+.guide kbd {
+  padding: 2px 5px;
+  border: 1px solid #376653;
+  border-radius: 4px;
+  color: #d4ebe2;
+  font: 0.85em "DM Mono";
+}
 .auth-screen {
   display: grid;
   min-height: 100vh;

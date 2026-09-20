@@ -13,6 +13,7 @@ export type WhatsAppWebStatus = {
   state: "disabled" | "starting" | "qr" | "authenticated" | "ready" | "disconnected";
   qr?: string;
   me?: string;
+  botName?: string;
   groups?: Array<{ id: string; name: string }>;
   targetGroup?: string;
   error?: string;
@@ -123,6 +124,15 @@ async function initialize() {
     nextClient.on("ready", async () => {
       status.state = "ready";
       status.me = nextClient.info?.wid?.user;
+      const botName = getSetting("whatsapp_bot_name");
+      status.botName = botName || undefined;
+      if (botName) {
+        try {
+          await nextClient.setDisplayName(botName);
+        } catch (error) {
+          status.error = String(error);
+        }
+      }
       const chats = await nextClient.getChats();
       const groups = chats
         .filter((chat) => chat.isGroup)
@@ -173,6 +183,7 @@ async function initialize() {
 }
 
 export async function startWhatsAppWeb() {
+  status.botName = getSetting("whatsapp_bot_name") || undefined;
   if (!config.WHATSAPP_WEB_ENABLED) {
     status.state = "disabled";
     return;
@@ -182,6 +193,13 @@ export async function startWhatsAppWeb() {
   }
   status.targetGroup = getSetting("whatsapp_group");
   void initialize();
+}
+
+export async function setBotName(name: string) {
+  setSetting("whatsapp_bot_name", name);
+  status.botName = name;
+  if (status.state === "ready" && client) await client.setDisplayName(name);
+  return status;
 }
 
 export async function setTargetGroup(group: string) {

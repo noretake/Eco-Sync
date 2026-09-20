@@ -23,6 +23,7 @@ declare module "whatsapp-web.js" {
     on(event: string, listener: (...args: any[]) => void): this;
     initialize(): Promise<void>;
     getChats(): Promise<Chat[]>;
+    setDisplayName(name: string): Promise<boolean>;
     logout(): Promise<void>;
     destroy(): Promise<void>;
   }

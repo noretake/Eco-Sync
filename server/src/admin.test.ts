@@ -22,6 +22,21 @@ describe("admin authorization", () => {
       .send({ group: "Eco Sync" });
     expect(authorized.status).not.toBe(401);
   });
+
+  it("protects WhatsApp bot display-name changes", async () => {
+    const unauthorized = await request(app)
+      .post("/api/whatsapp/name")
+      .send({ name: "ecosync_BOT" });
+    expect(unauthorized.status).toBe(401);
+    expect(unauthorized.body).toEqual({ error: "unauthorized" });
+
+    const authorized = await request(app)
+      .post("/api/whatsapp/name")
+      .set("x-admin-token", "test-admin-token")
+      .send({ name: "ecosync_BOT" });
+    expect(authorized.status).toBe(200);
+    expect(authorized.body.botName).toBe("ecosync_BOT");
+  });
 });
 
 afterAll(() => {

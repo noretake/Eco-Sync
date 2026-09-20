@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import ConnectGuide from "./ConnectGuide.js";
 import "./style.css";
 
 type Source = {
@@ -45,6 +46,7 @@ type WhatsAppStatus = {
   state: "disabled" | "starting" | "qr" | "authenticated" | "ready" | "disconnected";
   qr?: string;
   me?: string;
+  botName?: string;
   groups?: Array<{ id: string; name: string }>;
   targetGroup?: string;
   error?: string;
@@ -61,6 +63,7 @@ type UploadState = {
 };
 
 const isAdminPage = window.location.pathname === "/admin";
+const isConnectPage = window.location.pathname === "/connect";
 
 function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   return fetch(input, { ...init, credentials: "same-origin" });
@@ -250,6 +253,13 @@ function WhatsAppAdmin({
   status?: WhatsAppStatus;
   onStatus: (value: WhatsAppStatus) => void;
 }) {
+  const [botName, setBotName] = useState(status?.botName ?? "ecosync_BOT");
+  const [botNameState, setBotNameState] = useState("");
+
+  useEffect(() => {
+    if (status?.botName) setBotName(status.botName);
+  }, [status?.botName]);
+
   const selectGroup = (group: string) => {
     apiFetch("/api/whatsapp/group", {
       method: "POST",
@@ -269,21 +279,72 @@ function WhatsAppAdmin({
       .then(onStatus);
   };
 
+  const saveBotName = async () => {
+    setBotNameState("");
+    const response = await apiFetch("/api/whatsapp/name", {
+      method: "POST",
+      headers: { "content-type": "application/json", ...adminHeaders() },
+      body: JSON.stringify({ name: botName }),
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      setBotNameState(body.error ?? "Unable to save display name.");
+      return;
+    }
+    onStatus(body);
+    setBotNameState("Saved");
+  };
+
+  const botNameEditor = (
+    <div className="bot-name-row">
+      <label htmlFor="bot-display-name">Bot display name</label>
+      <div>
+        <input
+          id="bot-display-name"
+          value={botName}
+          maxLength={25}
+          onChange={(event) => setBotName(event.target.value)}
+        />
+        <button className="unlink" onClick={() => void saveBotName()}>
+          Save
+        </button>
+      </div>
+      <p className="whatsapp-muted">
+        Renames the WhatsApp profile of the linked phone number — use a spare number, not a personal
+        one.
+      </p>
+      {botNameState && (
+        <p className={botNameState === "Saved" ? "whatsapp-ready" : "whatsapp-error"}>
+          {botNameState}
+        </p>
+      )}
+    </div>
+  );
+
   if (!status || status.state === "starting") {
     return (
-      <p className="whatsapp-muted">
-        <span className="spinner" /> Starting linked device…
-      </p>
+      <>
+        <p className="whatsapp-muted">
+          <span className="spinner" /> Starting linked device…
+        </p>
+        {botNameEditor}
+      </>
     );
   }
   if (status.state === "disabled") {
-    return <p className="whatsapp-muted">Set WHATSAPP_WEB_ENABLED=true to connect a group.</p>;
+    return (
+      <>
+        <p className="whatsapp-muted">Set WHATSAPP_WEB_ENABLED=true to connect a group.</p>
+        {botNameEditor}
+      </>
+    );
   }
   if (status.state === "qr") {
     return (
       <>
         {status.qr && <img className="whatsapp-qr" src={status.qr} alt="WhatsApp link QR code" />}
         <p className="whatsapp-muted">Open WhatsApp → Linked devices → Link a device</p>
+        {botNameEditor}
       </>
     );
   }
@@ -307,10 +368,16 @@ function WhatsAppAdmin({
         <button className="unlink" onClick={logout}>
           Unlink
         </button>
+        {botNameEditor}
       </>
     );
   }
-  return <p className="whatsapp-error">{status.error ?? "WhatsApp device disconnected."}</p>;
+  return (
+    <>
+      <p className="whatsapp-error">{status.error ?? "WhatsApp device disconnected."}</p>
+      {botNameEditor}
+    </>
+  );
 }
 
 function App() {
@@ -683,6 +750,8 @@ function App() {
       ? `WhatsApp group: ${whatsapp.targetGroup} · connected`
       : "WhatsApp group not connected yet";
 
+  if (isConnectPage) return <ConnectGuide />;
+
   return (
     <div className="app">
       <aside>
@@ -770,6 +839,9 @@ function App() {
                 <p className="whatsapp-muted">Copy it now — it won't be shown again.</p>
               </div>
             )}
+            <a className="agent-guide" href="/connect">
+              Setup guide →
+            </a>
             {apiKeys.map((key) => (
               <div className="agent-key" key={key.id}>
                 <span>
